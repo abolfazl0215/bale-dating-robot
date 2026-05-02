@@ -1,0 +1,31 @@
+{
+  "name": "bale_bot",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.1040.0",
+    "aws-sdk": "^2.1693.0",
+    "axios": "^1.15.2",
+    "body-parser": "^2.2.2",
+    "bull": "^4.16.5",
+    "cloudinary": "^2.10.0",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "ioredis": "^5.10.1",
+    "mongoose": "^9.6.1",
+    "node-telegram-bot-api": "^0.67.0",
+    "protobufjs": "^8.0.3",
+    "sharp": "^0.34.5",
+    "telegraf": "^4.16.3",
+    "uuid": "^10.0.0",
+    "winston": "^3.19.0"
+  }
+}

@@ -1,0 +1,86 @@
+const Redis = require("ioredis");
+const Bull = require("bull");
+const winston = require("winston");
+
+// Logger configuration
+const logger = winston.createLogger({
+  level: "info",
+  format: winston.format.combine(
+    winston.format.timestamp(),
+    winston.format.json(),
+  ),
+  transports: [
+    new winston.transports.Console(),
+    new winston.transports.File({ filename: "queue-errors.log" }),
+  ],
+});
+
+const REDIS_URL =
+  "redis://:UkBjGl7nfkbJCpW2@services.irn8.chabokan.net:53254";
+
+const redisClient = new Redis(
+  "redis://:UkBjGl7nfkbJCpW2@services.irn8.chabokan.net:53254",
+  {
+    reconnectOnError: (err) => {
+      logger.error("Redis reconnection error", err);
+      return true;
+    },
+    maxRetriesPerRequest: null,
+    enableReadyCheck: false,
+  },
+);
+
+const defaultQueueOptions = {
+  defaultJobOptions: {
+    attempts: 5,
+    backoff: {
+      type: "exponential",
+      delay: 1000,
+    },
+    removeOnComplete: {
+      count: 50,
+    },
+    removeOnFail: {
+      count: 200,
+    },
+  },
+  limiter: {
+    max: 100, // Max jobs per duration
+    duration: 1000, // Duration in milliseconds
+  },
+};
+
+const createQueue = (name) => {
+  const queue = new Bull(name, REDIS_URL, defaultQueueOptions);
+
+  queue.on("error", (error) => {
+    logger.error(`Queue ${name} error:`, error);
+  });
+
+  queue.on("failed", (job, err) => {
+    logger.warn(`Job in queue ${name} failed:`, {
+      jobId: job.id,
+      error: err,
+    });
+  });
+
+  return queue;
+};
+
+const messageQueue = createQueue("messageQueue");
+const globalOperationsQueue = createQueue("globalOperationsQueue");
+const exploreQueue = createQueue("exploreQueue");
+const foryouQueue = createQueue("foryouQueue");
+const suggestQueue = createQueue("suggestQueue");
+const newLikeQueue = createQueue("newLikeQueue");
+
+module.exports = {
+  redisClient,
+  messageQueue,
+  globalOperationsQueue,
+  exploreQueue,
+  foryouQueue,
+  suggestQueue,
+  newLikeQueue,
+  logger,
+};
