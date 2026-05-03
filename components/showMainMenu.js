@@ -5,7 +5,6 @@ const showMainMenu = async (
   telegramId,
   existingUser,
   usersMap,
-  languageText,
 ) => {
   try {
     existingUser.userStep = "menu";
@@ -22,7 +21,7 @@ const showMainMenu = async (
     if (ctx?.message?.text === "☰") {
       // Show main menu
       await ctx.reply(
-        `1. ${languageText.viewProfiles}\n2. ${languageText.myProfile}\n3. ${languageText.sleepMode}\n----------------------------\n4. ${languageText.inviteFriendsText}`,
+        `1. ${"مشاهده پروفایل ها"}\n2. ${"پروفایل من"}\n3. ${"حالت خواب"}\n----------------------------\n4. ${"دوستان خود را دعوت کنید تا لایک های بیشتری دریافت کنید 😎"}`,
         {
           reply_markup: {
             keyboard: [
@@ -52,7 +51,9 @@ const showMainMenu = async (
       }
 
       if (!existingUser.firstLike) {
-        await ctx.reply(languageText.firstLikeText);
+        await ctx.reply(
+          "❤️ : لایک\n❌ : (رد کردن)نوپ\n💌 : پیام\n☰ : منو\n\nوقتی کاربری را لایک میکنید ، لایک شما برای او ارسال میشود و اگر اوهم شما را لایک کند ، متصل میشوید .",
+        );
         existingUser.firstLike = 1;
         usersMap.set(telegramId, {
           time: Date.now(),
@@ -100,9 +101,7 @@ const showMainMenu = async (
             index === 0
               ? `${fullName}, ${age}, ${flag + " " + state} ${
                   bio ? "\n" + bio : ""
-                }\n/user_${
-                  inviteCode_from_forYouList || "not_found"
-                }`
+                }\n/user_${inviteCode_from_forYouList || "not_found"}`
               : undefined,
         })),
       );
@@ -113,11 +112,12 @@ const showMainMenu = async (
         user: existingUser,
       });
     } else if (ctx?.message?.text === "❌") {
-      const targetId =
-        forYouList.get(telegramId)?.[0]?.telegramId;
+      const targetId = forYouList.get(telegramId)?.[0]?.telegramId;
 
       if (!existingUser.firstNope) {
-        await ctx.reply(languageText.firstLikeText);
+        await ctx.reply(
+          "❤️ : لایک\n❌ : (رد کردن)نوپ\n💌 : پیام\n☰ : منو\n\nوقتی کاربری را لایک میکنید ، لایک شما برای او ارسال میشود و اگر اوهم شما را لایک کند ، متصل میشوید .",
+        );
         existingUser.firstNope = 1;
         usersMap.set(telegramId, {
           time: Date.now(),
@@ -159,9 +159,7 @@ const showMainMenu = async (
             index === 0
               ? `${fullName}, ${age}, ${flag + " " + state} ${
                   bio ? "\n" + bio : ""
-                }\n/user_${
-                  inviteCode_from_forYouList || "not_found"
-                }`
+                }\n/user_${inviteCode_from_forYouList || "not_found"}`
               : undefined,
         })),
       );
@@ -177,7 +175,7 @@ const showMainMenu = async (
         time: Date.now(),
         user: existingUser,
       });
-      ctx.reply(languageText.directMessageText);
+      ctx.reply("پیام خود را ارسال کنید 🧐👇🏽");
     } else {
       ctx.reply("🧐👇🏽", {
         reply_markup: {
@@ -194,10 +192,12 @@ const showMainMenu = async (
         },
       });
     }
-    
   } catch (error) {
     console.error("Error in showMainMenu:", error);
-    ctx.reply(languageText.somethingWentWrong + "r3");
+    ctx.reply(
+      "مشکلی پیش آمده است لطفا به پشتیبانی اطلاع دهید (آیدی پشتیبانی در بیو)" +
+        "r3",
+    );
   }
 };
 

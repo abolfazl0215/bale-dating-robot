@@ -22,9 +22,8 @@ const foryouQueueController = async ({ telegramId }) => {
   // await findUser.save();
   // await redisClient.hset(`user:${telegramId}`, "lastSeen", 0);
 
-  if (!findUser || !findUser?.country || !findUser?.state) {
+  if (!findUser || !findUser?.state) {
     !findUser || console.log(`User with ID ${telegramId} not found.`);
-    !findUser?.country ||
       !findUser?.state ||
       console.log(
         `User with ID ${telegramId} has no location state.`,
@@ -40,10 +39,7 @@ const foryouQueueController = async ({ telegramId }) => {
     age: findUser.age || 123,
     gender: findUser.gender || "",
     lookingFor: findUser.lookingFor || "",
-    country: findUser.country || "",
     state: findUser.state || "",
-    flag: findUser.flag || "",
-    language: findUser.language || "en",
     lastSeen:
       findUser.lastSeen instanceof Date
         ? Math.floor(findUser.lastSeen.getTime() / 1000)

@@ -53,9 +53,7 @@ const states = [
 const editProfileInBot = async (
   ctx,
   chunkArray,
-  languageText,
   ages,
-  countriesTextShow,
   telegramId,
   savedUser,
   redisClient,
@@ -697,22 +695,28 @@ const editProfileInBot = async (
         const state = savedUser.state;
         const bio = savedUser.moreInformation.bio;
 
-        await ctx.replyWithPhoto(
-          {
-            source: fs.createReadStream(photos[0]),
-          },
-          {
-            caption: `${fullName}, ${age}, ${state} ${
-              bio ? "\n" + bio : ""
-            } `,
-            reply_markup: {
-              keyboard: [[{ text: "❤️" }, { text: "👉🏻" }]],
-              resize_keyboard: true,
-              one_time_keyboard: false,
-              is_persistent: true,
+        try {
+          await ctx.replyWithPhoto(
+            {
+              source: fs.createReadStream(photos[0]),
             },
-          },
-        );
+            {
+              caption: `${fullName}, ${age}, ${state} ${
+                bio ? "\n" + bio : ""
+              } `,
+            },
+          );
+        } catch (error) {
+          try {
+            await ctx.reply(
+              `${fullName}, ${age}, ${state} ${
+                bio ? "\n" + bio : ""
+              } `,
+            );
+          } catch (error) {
+            console.log(error);
+          }
+        }
 
         // await ctx.replyWithMediaGroup(
         //   photos.map((photo, index) => ({
@@ -867,22 +871,28 @@ const editProfileInBot = async (
 
               const photos = profileImages;
 
-              await ctx.replyWithPhoto(
-                {
-                  source: fs.createReadStream(photos[0]),
-                },
-                {
-                  caption: `${fullName}, ${age}, ${state} ${
-                    bio ? "\n" + bio : ""
-                  } `,
-                  reply_markup: {
-                    keyboard: [[{ text: "❤️" }, { text: "👉🏻" }]],
-                    resize_keyboard: true,
-                    one_time_keyboard: false,
-                    is_persistent: true,
+              try {
+                await ctx.replyWithPhoto(
+                  {
+                    source: fs.createReadStream(photos[0]),
                   },
-                },
-              );
+                  {
+                    caption: `${fullName}, ${age}, ${state} ${
+                      bio ? "\n" + bio : ""
+                    } `,
+                  },
+                );
+              } catch (error) {
+                try {
+                  await ctx.reply(
+                    `${fullName}, ${age}, ${state} ${
+                      bio ? "\n" + bio : ""
+                    } `,
+                  );
+                } catch (error) {
+                  console.log(error);
+                }
+              }
 
               // const photos = existingUser.profileImages || [];
               // await ctx.replyWithMediaGroup(
@@ -923,33 +933,33 @@ const editProfileInBot = async (
 
               setTimeout(async () => {
                 try {
-                  const {
-                    fullName,
-                    age,
-                    state,
-                    flag,
-                    bio,
-                    profileImages,
-                  } = forYouList.get(telegramId)[0];
+                  const { fullName, age, state, bio, profileImages } =
+                    forYouList.get(telegramId)[0];
 
                   const photos = profileImages;
 
-                  await ctx.replyWithPhoto(
-                    {
-                      source: fs.createReadStream(photos[0]),
-                    },
-                    {
-                      caption: `${fullName}, ${age}, ${state} ${
-                        bio ? "\n" + bio : ""
-                      } `,
-                      reply_markup: {
-                        keyboard: [[{ text: "❤️" }, { text: "👉🏻" }]],
-                        resize_keyboard: true,
-                        one_time_keyboard: false,
-                        is_persistent: true,
+                  try {
+                    await ctx.replyWithPhoto(
+                      {
+                        source: fs.createReadStream(photos[0]),
                       },
-                    },
-                  );
+                      {
+                        caption: `${fullName}, ${age}, ${state} ${
+                          bio ? "\n" + bio : ""
+                        } `,
+                      },
+                    );
+                  } catch (error) {
+                    try {
+                      await ctx.reply(
+                        `${fullName}, ${age}, ${state} ${
+                          bio ? "\n" + bio : ""
+                        } `,
+                      );
+                    } catch (error) {
+                      console.log(error);
+                    }
+                  }
 
                   // const photos = existingUser.profileImages || [];
                   // await ctx.replyWithMediaGroup(
@@ -1045,22 +1055,28 @@ const editProfileInBot = async (
       const bio = savedUser.moreInformation.bio;
 
       try {
-        await ctx.replyWithPhoto(
-          {
-            source: fs.createReadStream(photos[0]),
-          },
-          {
-            caption: `${fullName}, ${age}, ${state} ${
-              bio ? "\n" + bio : ""
-            } `,
-            reply_markup: {
-              keyboard: [[{ text: "❤️" }, { text: "👉🏻" }]],
-              resize_keyboard: true,
-              one_time_keyboard: false,
-              is_persistent: true,
+        try {
+          await ctx.replyWithPhoto(
+            {
+              source: fs.createReadStream(photos[0]),
             },
-          },
-        );
+            {
+              caption: `${fullName}, ${age}, ${state} ${
+                bio ? "\n" + bio : ""
+              } `,
+            },
+          );
+        } catch (error) {
+          try {
+            await ctx.reply(
+              `${fullName}, ${age}, ${state} ${
+                bio ? "\n" + bio : ""
+              } `,
+            );
+          } catch (error) {
+            console.log(error);
+          }
+        }
 
         // await ctx.replyWithMediaGroup(
         //   photos.map((photo, index) => ({

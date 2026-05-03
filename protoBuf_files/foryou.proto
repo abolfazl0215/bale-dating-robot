@@ -12,23 +12,20 @@ message User {
   int32 age = 4;
   string gender = 5;
   string lookingFor = 6;
-  string country = 7;
-  string state = 8;
-  string flag = 9;
-  string language = 10;
-  int64 lastSeen = 11;
-  int64 lastUpdate = 12;
-  bool sleep = 13;
-  string education = 14;
-  string dietaryPreference = 15;
-  string job = 16;
-  string workout = 17;
-  string sleepingHabits = 18;
-  string pets = 19;
-  string bio = 20;
-  int32 score = 21;
-  repeated string profileImages = 22;
-  string inviteCode = 23;
+  string state = 7;
+  int64 lastSeen = 8;
+  int64 lastUpdate = 9;
+  bool sleep = 10;
+  string education = 11;
+  string dietaryPreference = 12;
+  string job = 13;
+  string workout = 14;
+  string sleepingHabits = 15;
+  string pets = 16;
+  string bio = 17;
+  int32 score = 18;
+  repeated string profileImages = 19;
+  string inviteCode = 20;
 }
 
 

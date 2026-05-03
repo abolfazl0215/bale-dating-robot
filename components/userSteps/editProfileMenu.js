@@ -1,4 +1,5 @@
 const chunkArray = require("../../utils/chunkArray.js");
+const fs = require("fs");
 
 const editProfileMenu = async (
   ctx,
@@ -8,9 +9,7 @@ const editProfileMenu = async (
   forYouList,
   forYouTime,
   suggestQueue,
-  languageText,
   ages,
-  langsTextShow,
 ) => {
   if (ctx?.message?.text === "1🚀") {
     try {
@@ -61,22 +60,30 @@ const editProfileMenu = async (
           user: existingUser,
         });
         // const photos = existingUser.profileImages | [];
-        await ctx.replyWithPhoto(
-          {
-            source: fs.createReadStream(photos[0]),
-          },
-          {
-            caption: `${fullName}, ${age}, ${state} ${
-              bio ? "\n" + bio : ""
-            } \n/user_${inviteCode_from_forYouList || "not_found"}`,
-            reply_markup: {
-              keyboard: [[{ text: "❤️" }, { text: "👉🏻" }]],
-              resize_keyboard: true,
-              one_time_keyboard: false,
-              is_persistent: true,
+
+        try {
+          await ctx.replyWithPhoto(
+            {
+              source: fs.createReadStream(photos[0]),
             },
-          },
-        );
+            {
+              caption: `${fullName}, ${age}, ${state} ${
+                bio ? "\n" + bio : ""
+              } \n/user_${inviteCode_from_forYouList || "not_found"}`,
+            },
+          );
+        } catch (error) {
+          try {
+            await ctx.reply(
+              `${fullName}, ${age}, ${state} ${
+                bio ? "\n" + bio : ""
+              } \n/user_${inviteCode_from_forYouList || "not_found"}`,
+            );
+          } catch (error) {
+            console.log(error);
+          }
+        }
+
         // await ctx.replyWithMediaGroup(
         //   photos.map((photo, index) => ({
         //     type: "photo",
@@ -129,22 +136,30 @@ const editProfileMenu = async (
 
           const photos = profileImages;
           // const photos = existingUser.profileImages || [];
-          await ctx.replyWithPhoto(
-            {
-              source: fs.createReadStream(photos[0]),
-            },
-            {
-              caption: `${fullName}, ${age}, ${state} ${
-                bio ? "\n" + bio : ""
-              }\n/user_${inviteCode_from_forYouList || "not_found"}`,
-              reply_markup: {
-                keyboard: [[{ text: "❤️" }, { text: "👉🏻" }]],
-                resize_keyboard: true,
-                one_time_keyboard: false,
-                is_persistent: true,
+
+          try {
+            await ctx.replyWithPhoto(
+              {
+                source: fs.createReadStream(photos[0]),
               },
-            },
-          );
+              {
+                caption: `${fullName}, ${age}, ${state} ${
+                  bio ? "\n" + bio : ""
+                }\n/user_${inviteCode_from_forYouList || "not_found"}`,
+              },
+            );
+          } catch (error) {
+            try {
+              await ctx.reply(
+                `${fullName}, ${age}, ${state} ${
+                  bio ? "\n" + bio : ""
+                }\n/user_${inviteCode_from_forYouList || "not_found"}`,
+              );
+            } catch (error) {
+              console.log(error);
+            }
+          }
+
           // await ctx.replyWithMediaGroup(
           //   photos.map((photo, index) => ({
           //     type: "photo",

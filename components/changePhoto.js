@@ -7,7 +7,6 @@ const fs = require("fs");
 
 const changePhoto = async (
   ctx,
-  languageText,
   telegramId,
   existingUser,
   redisClient,

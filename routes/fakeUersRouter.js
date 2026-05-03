@@ -9,11 +9,13 @@ const protobuf = require("protobufjs");
 // ─── تصاویر رندوم از آواتار رایگان ───────────────────────────────────────────
 const MALE_PHOTOS = Array.from(
   { length: 50 },
-  (_, i) => `https://randomuser.me/api/portraits/men/${i + 1}.jpg`,
+  (_, i) =>
+    "public/uploads/1777660207645-93a344a9-1db1-438a-86aa-b4168ddbf856.jpg",
 );
 const FEMALE_PHOTOS = Array.from(
   { length: 50 },
-  (_, i) => `https://randomuser.me/api/portraits/women/${i + 1}.jpg`,
+  (_, i) =>
+    "public/uploads/1777660207645-93a344a9-1db1-438a-86aa-b4168ddbf856.jpg",
 );
 
 // ─── اسامی فارسی رندوم ────────────────────────────────────────────────────────
@@ -157,7 +159,7 @@ function buildFakeUser(index) {
   const fullName = `${firstName} ${lastName}`;
   const age = randInt(18, 45);
   const photo1 = rand(photos);
-  const photo2 = rand(photos.filter((p) => p !== photo1));
+  const photo2 = rand(photos);
   const telegramId = generateFakeTelegramId();
   const bio = rand(BIOS);
 

@@ -16,7 +16,6 @@ const User = require("./models/User");
 const protobuf = require("protobufjs");
 const usersMap = require("./utils/usersMap");
 const forYouList = require("./utils/forYouList");
-// const fakeUsers = require("./utils/fakeUsers.js");
 
 const countries = require("./data/countries.json");
 require("dotenv").config();
@@ -53,6 +52,7 @@ const searchStep = require("./components/userSteps/searchStep.js");
 const adminRoutes = require("./routes/adminRoutes");
 const showMainMenu = require("./components/showMainMenu");
 const fakeUsersRouter = require("./routes/fakeUersRouter");
+const menuStep = require("./components/userSteps/menuStep.js");
 
 const server = http.createServer(app, {});
 
@@ -62,24 +62,6 @@ mongoose
   )
   .then(async () => {
     console.log("Connected to MongoDB");
-    // Fix email index: drop old non-sparse index and let Mongoose recreate it as sparse
-    // try {
-    //   const userCollection =
-    //     mongoose.connection.db.collection("users");
-    //   const indexes = await userCollection.indexes();
-    //   const emailIndex = indexes.find(
-    //     (idx) => idx.key && idx.key.email === 1,
-    //   );
-    //   if (emailIndex && !emailIndex.sparse) {
-    //     await userCollection.dropIndex("email_1");
-    //     console.log("Dropped old non-sparse email index");
-    //     // Mongoose will automatically create the sparse index based on schema
-    //     await User.createIndexes();
-    //     console.log("Recreated email index as sparse");
-    //   }
-    // } catch (err) {
-    //   console.error("Error fixing email index:", err);
-    // }
   })
   .catch((err) => console.error("Could not connect to MongoDB", err));
 
@@ -160,21 +142,17 @@ function getNowTime() {
 // check for new likes every 1 houre and send notification <<<
 setInterval(async () => {
   await checkNewLikesForSendNotif();
-}, 3600000);
+}, 10000);
+// }, 3600000);
 // check for new likes every 1 houre and send notification >>>
 
 const ages = Array.from({ length: 63 }, (_, i) => 18 + i); // [18, 19, ..., 70]
-const langsTextShow = languages.map((item) => item.text);
-const countriesTextShow = countries.map(
-  (item) => item.emojiFlag + " " + item.nativeName,
-);
 
 const lastTimeAddProfileToList = new Map();
-// const forYouList = new Map();
 
 const forYouTime = new Map();
 
-// check and cleanup old users from map and save to mingoDB every 30 minutes <<<
+// check and cleanup old users from map and save to mongoDB every 30 minutes <<<
 async function startCleanup() {
   await cleanupOldUsersFromMapAndSaveToDB();
   setTimeout(startCleanup, 30 * 60 * 1000); // 30 دقیقه
@@ -184,29 +162,25 @@ setTimeout(() => {
 }, 10000);
 // check and cleanup old users from map and save to mingoDB every 30 minutes >>>
 
+// generate invite link <<<<<<<<<<<<<<<<<<<<
+const generateInviteLink = (telegramId) => {
+  return `https://ble.ir/pounes_dating_bot?start=${generateInviteCode(
+    telegramId,
+  )}`;
+};
+// generate invite link >>>>>>>>>>>>>>>>>>>>
+
 const processStatement = async (ctx) => {
   try {
-    if (ctx.message.successful_payment) {
-      console.log("پرداخت موفق:", ctx.message.successful_payment);
-      await ctx.reply("✅ پرداخت موفق! اشتراک شما فعال شد.");
-      return;
-    }
-
-    const inviteLink = `https://t.me/pounes_bot?start=${generateInviteCode(
-      ctx.from.id,
-    )}`;
-
     const telegramId = ctx.from.id;
     const telegramName = ctx.from.first_name;
     const userName = ctx.from.username;
     const isBot = ctx.from.is_bot;
     const inviteCode = ctx.startPayload;
 
-    console.log({ telegramId, telegramName, userName, isBot });
-
     if (isBot || !telegramId) return;
 
-    // set existingUser <<<
+    // set existingUser <<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     let existingUser;
     if (usersMap.get(telegramId)) {
       existingUser = usersMap.get(telegramId).user;
@@ -220,7 +194,7 @@ const processStatement = async (ctx) => {
         });
       }
     }
-    // set existingUser >>>
+    // set existingUser >>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
     // check if user is banned cant use bot <<<
     if (existingUser?.ban) {
@@ -229,30 +203,64 @@ const processStatement = async (ctx) => {
     }
     // check if user is banned cant use bot >>>
 
-    // if user is unavailable private chat ask to active it <<<
-    // if (existingUser?.unavailablePv) {
-    //   let userLanguage = existingUser?.language || "en";
-    //   let languageText = texts.find(
-    //     (text) => text.language === userLanguage,
-    //   );
-    //   await ctx.reply(
-    //     `${languageText.unavailableProfile}:\n\n1. ${languageText.activePvButton}\n2. ${languageText.haveUsername}`,
-    //     {
-    //       reply_markup: {
-    //         inline_keyboard: [
-    //           [
-    //             {
-    //               text: languageText.activePv,
-    //               callback_data: "active_pv",
-    //             },
-    //           ],
-    //         ],
-    //       },
-    //     },
-    //   );
-    //   return;
-    // }
-    // if user is unavailable private chat ask to active it >>>
+    // if user is not have username ask to fill it <<<<<<<<<
+    if (!userName) {
+      try {
+        try {
+          ctx.replyWithPhoto(
+            {
+              source: fs.createReadStream(
+                "public/uploads/username.jpg",
+              ),
+            },
+            {
+              caption:
+                "برای استفاده از ربات حتما باید یک شناسه کاربری (آیدی) در بله داشته باشید ، یک نام کاربری برای خود انتخاب کنید و سپس مجددا امتحان کنید \n حساب کاربری -> شناسه کاربری",
+              reply_markup: {
+                inline_keyboard: [
+                  [
+                    {
+                      text: "انجام دادم ✅",
+                      callback_data: "done_start",
+                    },
+                  ],
+                ],
+              },
+            },
+          );
+        } catch (error) {
+          try {
+            await ctx.reply(
+              "برای استفاده از ربات حتما باید یک شناسه کاربری (آیدی) در بله داشته باشید ، یک نام کاربری برای خود انتخاب کنید و سپس مجددا امتحان کنید \n حساب کاربری -> شناسه کاربری",
+              {
+                reply_markup: {
+                  inline_keyboard: [
+                    [
+                      {
+                        text: "انجام دادم ✅",
+                        callback_data: "done_start",
+                      },
+                    ],
+                  ],
+                },
+              },
+            );
+          } catch (error) {
+            console.log(error);
+          }
+        }
+        return;
+      } catch (e) {
+        try {
+          ctx.reply(
+            "برای استفاده از ربات حتما باید یک شناسه کاربری (آیدی) در بله داشته باشید ، یک نام کاربری برای خود انتخاب کنید و سپس مجددا امتحان کنید \n حساب کاربری -> شناسه کاربری",
+          );
+        } catch (error) {
+          console.log(error);
+        }
+      }
+    }
+    // if user is not have username ask to fill it >>>>>>>>>
 
     // if user changed userName update it in database <<<
     if (existingUser && userName !== existingUser?.userName) {
@@ -264,43 +272,8 @@ const processStatement = async (ctx) => {
         user: updatedUser,
         time: getNowTime(),
       });
-
-      try {
-        await bot.telegram.sendMessage(
-          775377257,
-          `شما و  با همدیگر مطابقت داده شده‌اید! 🎉\n\nاز طریق دکمه زیر می‌توانید با هم چت کنید:`,
-          {
-            reply_markup: {
-              inline_keyboard: [
-                [
-                  {
-                    text: "💬 شروع چت",
-                    url: `tg://user?id=${telegramId}&text=سلام ، از طریق تلگرام با شما آشنا شدم 😊`,
-                  },
-                ],
-              ],
-            },
-          },
-        );
-      } catch (error) {
-        existingUser.unAvailablePv = true;
-        usersMap.set(telegramId, {
-          time: getNowTime(),
-          user: existingUser,
-        });
-        await User.findOneAndUpdate(
-          { telegramId },
-          { unavailablePv: true },
-          { new: true },
-        );
-      }
     }
     // if user changed userName update it in database >>>
-
-    let userLanguage = existingUser?.language || "en";
-    let languageText = texts.find(
-      (text) => text.language === userLanguage,
-    );
 
     // check if user exist in database and after 8 minutes and 20 seconds add profile to forYou queue again <<<
     if (existingUser) {
@@ -369,13 +342,9 @@ const processStatement = async (ctx) => {
       if (userStep === "register") {
         await registerInBot(
           ctx,
-          langsTextShow,
           ages,
-          countriesTextShow,
-          texts,
           chunkArray,
           telegramId,
-          languages,
           telegramName,
           existingUser,
           redisClient,
@@ -393,17 +362,13 @@ const processStatement = async (ctx) => {
           forYouList,
           forYouTime,
           suggestQueue,
-          languageText,
           ages,
-          langsTextShow,
         );
       } else if (userStep === "editProfile") {
         editProfileInBot(
           ctx,
           chunkArray,
-          languageText,
           ages,
-          countriesTextShow,
           telegramId,
           existingUser,
           redisClient,
@@ -416,7 +381,6 @@ const processStatement = async (ctx) => {
       } else if (userStep === "changePhoto") {
         await changePhoto(
           ctx,
-          languageText,
           telegramId,
           existingUser,
           redisClient,
@@ -433,17 +397,10 @@ const processStatement = async (ctx) => {
           forYouList,
           forYouTime,
           suggestQueue,
-          languageText,
         );
 
         if (ctx?.message?.text === "☰") {
-          await showMainMenu(
-            ctx,
-            telegramId,
-            existingUser,
-            usersMap,
-            languageText,
-          );
+          await showMainMenu(ctx, telegramId, existingUser, usersMap);
         } else if (ctx?.message?.text === "❤️") {
           if (
             forYouList.get(telegramId) &&
@@ -457,7 +414,9 @@ const processStatement = async (ctx) => {
           }
 
           if (!existingUser.firstLike) {
-            await ctx.reply(languageText.firstLikeText);
+            await ctx.reply(
+              "❤️ : لایک\n❌ : (رد کردن)نوپ\n💌 : پیام\n☰ : منو\n\nوقتی کاربری را لایک میکنید ، لایک شما برای او ارسال میشود و اگر اوهم شما را لایک کند ، متصل میشوید .",
+            );
             existingUser.firstLike = 1;
             usersMap.set(telegramId, {
               time: Date.now(),
@@ -499,20 +458,30 @@ const processStatement = async (ctx) => {
           userTelId = forYouList.get(telegramId)[0].telegramId;
 
           const photos = profileImages;
-          await ctx.replyWithMediaGroup(
-            photos.map((photo, index) => ({
-              type: "photo",
-              media: photo,
-              caption:
-                index === 0
-                  ? `${fullName}, ${age}, ${flag + " " + state} ${
-                      bio ? "\n" + bio : ""
-                    }\n/user_${
-                      inviteCode_from_forYouList || "not_found"
-                    }`
-                  : undefined,
-            })),
-          );
+
+          try {
+            await ctx.replyWithPhoto(
+              {
+                source: fs.createReadStream(photos[0]),
+              },
+              {
+                caption: `${fullName}, ${age}, ${state} ${
+                  bio ? "\n" + bio : ""
+                } \n/user_${inviteCode_from_forYouList || "not_found"}`,
+              },
+            );
+          } catch (error) {
+            try {
+              await ctx.reply(
+                `${fullName}, ${age}, ${state} ${
+                  bio ? "\n" + bio : ""
+                } \n/user_${inviteCode_from_forYouList || "not_found"}`,
+              );
+            } catch (error) {
+              console.log(error);
+            }
+          }
+
           existingUser.lastViewed =
             +forYouList.get(telegramId)[0].telegramId; // نیاز به ذخیره کردنش نیست
           usersMap.set(telegramId, {
@@ -524,7 +493,9 @@ const processStatement = async (ctx) => {
             forYouList.get(telegramId)?.[0]?.telegramId;
 
           if (!existingUser.firstNope) {
-            await ctx.reply(languageText.firstLikeText);
+            await ctx.reply(
+              "❤️ : لایک\n❌ : (رد کردن)نوپ\n💌 : پیام\n☰ : منو\n\nوقتی کاربری را لایک میکنید ، لایک شما برای او ارسال میشود و اگر اوهم شما را لایک کند ، متصل میشوید .",
+            );
             existingUser.firstNope = 1;
             usersMap.set(telegramId, {
               time: Date.now(),
@@ -558,20 +529,30 @@ const processStatement = async (ctx) => {
           userTelId = forYouList.get(telegramId)[0].telegramId;
 
           const photos = profileImages;
-          await ctx.replyWithMediaGroup(
-            photos.map((photo, index) => ({
-              type: "photo",
-              media: photo,
-              caption:
-                index === 0
-                  ? `${fullName}, ${age}, ${flag + " " + state} ${
-                      bio ? "\n" + bio : ""
-                    }\n/user_${
-                      inviteCode_from_forYouList || "not_found"
-                    }`
-                  : undefined,
-            })),
-          );
+
+          try {
+            await ctx.replyWithPhoto(
+              {
+                source: fs.createReadStream(photos[0]),
+              },
+              {
+                caption: `${fullName}, ${age}, ${state} ${
+                  bio ? "\n" + bio : ""
+                } \n/user_${inviteCode_from_forYouList || "not_found"}`,
+              },
+            );
+          } catch (error) {
+            try {
+              await ctx.reply(
+                `${fullName}, ${age}, ${state} ${
+                  bio ? "\n" + bio : ""
+                } \n/user_${inviteCode_from_forYouList || "not_found"}`,
+              );
+            } catch (error) {
+              console.log(error);
+            }
+          }
+
           existingUser.lastViewed =
             +forYouList.get(telegramId)[0].telegramId; // نیاز به ذخیره کردنش نیست
           usersMap.set(telegramId, {
@@ -585,7 +566,7 @@ const processStatement = async (ctx) => {
             user: existingUser,
           });
           // await existingUser.save();
-          ctx.reply(languageText.directMessageText);
+          ctx.reply("پیام خود را ارسال کنید 🧐👇🏽");
         } else {
           ctx.reply("🧐👇🏽", {
             reply_markup: {
@@ -603,307 +584,25 @@ const processStatement = async (ctx) => {
           });
         }
       } else if (userStep === "menu") {
-        if (ctx?.message?.text === "1 🚀") {
-          try {
-            existingUser.userStep = "search";
-            usersMap.set(telegramId, {
-              time: Date.now(),
-              user: existingUser,
-            });
-            if (
-              forYouList.get(telegramId) &&
-              Array.isArray(forYouList.get(telegramId)) &&
-              forYouList.get(telegramId).length > 10 &&
-              forYouTime.get(telegramId) &&
-              forYouTime.get(telegramId) + 600000 > Date.now()
-            ) {
-              await ctx.reply("🔎", {
-                reply_markup: {
-                  keyboard: [
-                    [
-                      { text: "💌" },
-                      { text: "❌" },
-                      { text: "❤️" },
-                      { text: "☰" },
-                    ],
-                  ],
-                  resize_keyboard: true,
-                  one_time_keyboard: false,
-                  is_persistent: true, // این خط را اضافه کنید
-                },
-              });
-
-              const {
-                fullName,
-                age,
-                state,
-                flag,
-                bio,
-                profileImages,
-                inviteCode: inviteCode_from_forYouList,
-              } = forYouList.get(telegramId)[0];
-
-              const photos = profileImages;
-              // const photos = existingUser.profileImages || [];
-              await ctx.replyWithMediaGroup(
-                photos.map((photo, index) => ({
-                  type: "photo",
-                  media: photo,
-                  caption:
-                    index === 0
-                      ? `${fullName}, ${age}, ${flag + " " + state} ${
-                          bio ? "\n" + bio : ""
-                        } \n/user_${
-                          inviteCode_from_forYouList || "not_found"
-                        }`
-                      : undefined,
-                })),
-              );
-              existingUser.lastViewed =
-                +forYouList.get(telegramId)[0].telegramId; // نیاز به ذخیره کردنش نیست
-              usersMap.set(telegramId, {
-                time: Date.now(),
-                user: existingUser,
-              });
-            } else {
-              forYouTime.set(telegramId, Date.now());
-              // add to search queue
-              suggestQueue.add({
-                telegramId,
-                user: existingUser,
-              });
-
-              // setTimeout(async () => {
-              try {
-                const {
-                  fullName,
-                  age,
-                  state,
-                  flag,
-                  bio,
-                  profileImages,
-                  inviteCode: inviteCode_from_forYouList,
-                } = forYouList.get(telegramId)[0];
-
-                await ctx.reply("🔎", {
-                  reply_markup: {
-                    keyboard: [
-                      [
-                        { text: "💌" },
-                        { text: "❌" },
-                        { text: "❤️" },
-                        { text: "☰" },
-                      ],
-                    ],
-                    resize_keyboard: true,
-                    is_persistent: true, // این خط را اضافه کنید
-                  },
-                });
-                const photos = profileImages;
-                // const photos = existingUser.profileImages || [];
-                await ctx.replyWithMediaGroup(
-                  photos.map((photo, index) => ({
-                    type: "photo",
-                    media: photo,
-                    caption:
-                      index === 0
-                        ? `${fullName}, ${age}, ${
-                            flag + " " + state
-                          } ${bio ? "\n" + bio : ""}\n/user_${
-                            inviteCode_from_forYouList || "not_found"
-                          }`
-                        : undefined,
-                  })),
-                );
-                existingUser.lastViewed =
-                  +forYouList.get(telegramId)[0].telegramId; // نیاز به ذخیره کردنش نیست
-                usersMap.set(telegramId, {
-                  time: Date.now(),
-                  user: existingUser,
-                });
-              } catch (error) {
-                console.log({ error });
-              }
-              // }, 3000);
-            }
-          } catch (error) {
-            console.log({ error });
-          }
-        } else if (ctx?.message?.text === "2") {
-          try {
-            const photos = existingUser.profileImages;
-            const fullName = existingUser.fullName;
-            const age = existingUser.age;
-            const state = existingUser.state;
-            const bio = existingUser.moreInformation.bio;
-            const inviteCode = existingUser.inviteCode;
-
-            await ctx.replyWithPhoto(
-              {
-                source: fs.createReadStream(photos[0]),
-              },
-              {
-                caption: `${fullName}, ${age}, ${state} ${
-                  bio ? "\n" + bio : ""
-                } \n/user_${inviteCode || "not_found"}`,
-              },
-            );
-
-            // await ctx.replyWithMediaGroup(
-            //   photos.map((photo, index) => ({
-            //     type: "photo",
-            //     media: photo,
-            //     caption:
-            //       index === 0
-            //         ? `${fullName}, ${age}, ${flag + " " + state} ${
-            //             bio ? "\n" + bio : ""
-            //           } \n/user_${inviteCode || "not_found"}`
-            //         : undefined,
-            //   })),
-            // );
-
-            await User.updateOne(
-              { telegramId },
-              { userStep: "editProfileMenu" },
-            );
-
-            existingUser.userStep = "editProfileMenu";
-
-            usersMap.set(telegramId, {
-              time: Date.now(),
-              user: existingUser,
-            });
-
-            ctx.reply(
-              `1. ${languageText.viewProfiles} \n2. ${languageText.editMyProfile} \n3. ${languageText.changeMyPhoto} \n4. ${languageText.changeLanguage}`,
-              {
-                reply_markup: {
-                  keyboard: [
-                    [
-                      { text: "1🚀" },
-                      { text: "2" },
-                      { text: "3" },
-                      { text: "4" },
-                    ],
-                  ],
-                  resize_keyboard: true,
-                  one_time_keyboard: false,
-                  is_persistent: true,
-                },
-              },
-            );
-          } catch (error) {
-            console.log({ error });
-          }
-        } else if (ctx?.message?.text === "3") {
-          try {
-            existingUser.userStep = "sleep";
-            // await existingUser.save();
-            usersMap.set(telegramId, {
-              time: Date.now(),
-              user: existingUser,
-            });
-
-            ctx.reply(
-              `${languageText.sleepMode}: ${
-                existingUser.sleep
-                  ? languageText.active
-                  : languageText.inactive
-              }\n\n${languageText.sleepDetail}`,
-              {
-                reply_markup: {
-                  keyboard: [
-                    [
-                      {
-                        text: existingUser.sleep
-                          ? languageText.inactive
-                          : languageText.active,
-                      },
-                    ],
-                    [{ text: languageText.goBack }],
-                  ],
-                  resize_keyboard: true,
-                  one_time_keyboard: false,
-                  is_persistent: true,
-                },
-              },
-            );
-          } catch (error) {
-            console.log(error);
-          }
-        } else if (ctx?.message?.text === "4") {
-          existingUser.userStep = "invite";
-          usersMap.set(telegramId, {
-            time: Date.now(),
-            user: existingUser,
-          });
-          await ctx.reply(languageText.shareText2, {
-            reply_markup: {
-              keyboard: [[{ text: languageText.goBack }]],
-              resize_keyboard: true,
-              one_time_keyboard: false,
-              is_persistent: true,
-            },
-          });
-          const shareText =
-            languageText.shareText + "\n👉🏻 " + inviteLink;
-
-          ctx.reply(shareText, {
-            reply_markup: {
-              inline_keyboard: [
-                [
-                  {
-                    text: languageText.shareOnTelegram,
-                    url: `https://t.me/share/url?url=${encodeURIComponent(
-                      inviteLink,
-                    )}&text=${encodeURIComponent(shareText)}`,
-                  },
-                ],
-                [
-                  {
-                    text: languageText.shareOnWhatsApp,
-                    url: `https://wa.me/?text=${encodeURIComponent(
-                      shareText,
-                    )}`,
-                  },
-                ],
-              ],
-            },
-          });
-          return;
-        } else {
-          try {
-            ctx.reply(
-              `1. ${languageText.viewProfiles}\n2. ${languageText.myProfile}\n3. ${languageText.sleepMode}\n----------------------------\n4. ${languageText.inviteFriendsText}`,
-              {
-                reply_markup: {
-                  keyboard: [
-                    [
-                      { text: "1 🚀" },
-                      { text: "2" },
-                      { text: "3" },
-                      { text: "4" },
-                      //{ text: "5" },
-                    ],
-                  ],
-                  resize_keyboard: true,
-                  is_persistent: true,
-                },
-              },
-            );
-          } catch (error) {
-            console.log({ error });
-          }
-        }
+        await menuStep(
+          ctx,
+          existingUser,
+          usersMap,
+          forYouList,
+          forYouTime,
+          telegramId,
+          generateInviteLink,
+          suggestQueue,
+        );
       } else if (userStep === "invite") {
-        if (ctx?.message?.text === languageText.goBack) {
+        if (ctx?.message?.text === "بازگشت") {
           existingUser.userStep = "menu";
           usersMap.set(telegramId, {
             time: Date.now(),
             user: existingUser,
           });
           ctx.reply(
-            `1. ${languageText.viewProfiles}\n2. ${languageText.myProfile}\n3. ${languageText.sleepMode}\n----------------------------\n4. ${languageText.inviteFriendsText}`,
+            `1. ${"مشاهده پروفایل ها"}\n2. ${"پروفایل من"}\n3. ${"حالت خواب"}\n----------------------------\n4. ${"دوستان خود را دعوت کنید تا لایک های بیشتری دریافت کنید 😎"}`,
             {
               reply_markup: {
                 keyboard: [
@@ -922,109 +621,26 @@ const processStatement = async (ctx) => {
             },
           );
         } else {
-          await ctx.reply(languageText.shareText2, {
-            reply_markup: {
-              keyboard: [[{ text: languageText.goBack }]],
-              resize_keyboard: true,
-              one_time_keyboard: false,
-              is_persistent: true,
-            },
-          });
-          const shareText =
-            languageText.shareText + "\n👉🏻 " + inviteLink;
-
-          ctx.reply(shareText, {
-            reply_markup: {
-              inline_keyboard: [
-                [
-                  {
-                    text: languageText.shareOnTelegram,
-                    url: `https://t.me/share/url?url=${encodeURIComponent(
-                      inviteLink,
-                    )}&text=${encodeURIComponent(shareText)}`,
-                  },
-                ],
-                [
-                  {
-                    text: languageText.shareOnWhatsApp,
-                    url: `https://wa.me/?text=${encodeURIComponent(
-                      shareText,
-                    )}`,
-                  },
-                ],
-              ],
-            },
-          });
-        }
-      } else if (userStep === "changeLanguage") {
-        if (
-          !ctx?.message?.text ||
-          !langsTextShow.map(String).includes(ctx?.message?.text)
-        ) {
-          try {
-            ctx.reply(languageText.errorSelectLanguage, {
+          await ctx.reply(
+            "دوستان خود را دعوت کنید تا لایک های بیشتری دریافت کنید!\n\nبا دوستان خود یا در شبکه های اجتماعی خود به اشتراک گذاری کنید!\nلینک شخصی شما 👇🏽",
+            {
               reply_markup: {
-                keyboard: chunkArray(langsTextShow, 2),
+                keyboard: [[{ text: "بازگشت" }]],
                 resize_keyboard: true,
                 one_time_keyboard: false,
                 is_persistent: true,
               },
-            });
-          } catch (error) {
-            ctx.reply(languageText.somethingWentWrong + "cl2");
-          }
-          return;
-        } else {
-          try {
-            const findedLang =
-              languages.find(
-                (lang) => lang.text === ctx?.message?.text,
-              ).langCode || "en";
+            },
+          );
+          const shareText =
+            "ربات دوستیابی پونس 🔥 در بله است! یک دوست جدید یا حتی یک عاشق پیدا کنید 👫" +
+            "\n👉🏻 " +
+            generateInviteLink(telegramId);
 
-            userLanguage = findedLang;
-            languageText = texts.find(
-              (text) => text.language === userLanguage,
-            );
-
-            existingUser.language = findedLang;
-            existingUser.userStep = "menu";
-            // await existingUser.save();
-
-            usersMap.set(telegramId, {
-              time: Date.now(),
-              user: existingUser,
-            });
-
-            // save in redis
-            await redisClient.hmset(`user:${telegramId}`, {
-              language: findedLang,
-            });
-
-            await ctx.reply("✅");
-            ctx.reply(
-              `1. ${languageText.viewProfiles}\n2. ${languageText.myProfile}\n3. ${languageText.sleepMode}\n----------------------------\n4. ${languageText.inviteFriendsText}`,
-              {
-                reply_markup: {
-                  keyboard: [
-                    [
-                      { text: "1 🚀" },
-                      { text: "2" },
-                      { text: "3" },
-                      { text: "4" },
-                      //{ text: "5" },
-                    ],
-                  ],
-                  resize_keyboard: true,
-                  is_persistent: true,
-                },
-              },
-            );
-          } catch (error) {
-            ctx.reply(languageText.somethingWentWrong + "r3");
-          }
+          ctx.reply(shareText);
         }
       } else if (userStep === "sleep") {
-        if (ctx?.message?.text === languageText.goBack) {
+        if (ctx?.message?.text === "بازگشت") {
           try {
             existingUser.userStep = "menu";
             // await existingUser.save();
@@ -1034,7 +650,7 @@ const processStatement = async (ctx) => {
             });
 
             ctx.reply(
-              `1. ${languageText.viewProfiles}\n2. ${languageText.myProfile}\n3. ${languageText.sleepMode}\n----------------------------\n4. ${languageText.inviteFriendsText}`,
+              `1. ${"مشاهده پروفایل ها"}\n2. ${"پروفایل من"}\n3. ${"حالت خواب"}\n----------------------------\n4. ${"دوستان خود را دعوت کنید تا لایک های بیشتری دریافت کنید 😎"}`,
               {
                 reply_markup: {
                   keyboard: [
@@ -1055,8 +671,8 @@ const processStatement = async (ctx) => {
             console.log({ error });
           }
         } else if (
-          ctx?.message?.text === languageText.active ||
-          ctx?.message?.text === languageText.inactive
+          ctx?.message?.text === "فعال" ||
+          ctx?.message?.text === "غیرفعال"
         ) {
           try {
             existingUser.userStep = "menu";
@@ -1074,7 +690,7 @@ const processStatement = async (ctx) => {
 
             await ctx.reply("✅");
             ctx.reply(
-              `1. ${languageText.viewProfiles}\n2. ${languageText.myProfile}\n3. ${languageText.sleepMode}\n----------------------------\n4. ${languageText.inviteFriendsText}`,
+              `1. ${"مشاهده پروفایل ها"}\n2. ${"پروفایل من"}\n3. ${"حالت خواب"}\n----------------------------\n4. ${"دوستان خود را دعوت کنید تا لایک های بیشتری دریافت کنید 😎"}`,
               {
                 reply_markup: {
                   keyboard: [
@@ -1097,22 +713,18 @@ const processStatement = async (ctx) => {
         } else {
           try {
             ctx.reply(
-              `${languageText.sleepMode}: ${
-                existingUser.sleep
-                  ? languageText.active
-                  : languageText.inactive
-              }\n\n${languageText.sleepDetail}`,
+              `${"حالت خواب"}: ${
+                existingUser.sleep ? "فعال" : "غیرفعال"
+              }\n\n${"اگر حالت خواب فعال باشد ، لایکی دریافت نمیکنید"}`,
               {
                 reply_markup: {
                   keyboard: [
                     [
                       {
-                        text: existingUser.sleep
-                          ? languageText.inactive
-                          : languageText.active,
+                        text: existingUser.sleep ? "غیرفعال" : "فعال",
                       },
                     ],
-                    [{ text: languageText.goBack }],
+                    [{ text: "بازگشت" }],
                   ],
                   resize_keyboard: true,
                   one_time_keyboard: false,
@@ -1125,7 +737,7 @@ const processStatement = async (ctx) => {
           }
         }
       } else if (userStep === "notificationSleepMode") {
-        if (ctx?.message?.text === languageText.goBack) {
+        if (ctx?.message?.text === "بازگشت") {
           try {
             existingUser.userStep = "notificationMenu";
             // await existingUser.save();
@@ -1135,7 +747,7 @@ const processStatement = async (ctx) => {
             });
 
             await ctx.reply(
-              `${languageText.likedYouText}\n\n1. ${languageText.show}\n2. ${languageText.sleepMode}`,
+              `${"افرادی شما را لایک کردند. یه نگاهی بنداز "}\n\n1. ${"نمایش"}\n2. ${"حالت خواب"}`,
               {
                 reply_markup: {
                   keyboard: [[{ text: "1 🚀" }, { text: "2" }]],
@@ -1149,8 +761,8 @@ const processStatement = async (ctx) => {
             console.log({ error });
           }
         } else if (
-          ctx?.message?.text === languageText.active ||
-          ctx?.message?.text === languageText.inactive
+          ctx?.message?.text === "فعال" ||
+          ctx?.message?.text === "غیرفعال"
         ) {
           try {
             existingUser.userStep = "notificationMenu";
@@ -1168,7 +780,7 @@ const processStatement = async (ctx) => {
 
             await ctx.reply("✅");
             await ctx.reply(
-              `${languageText.likedYouText}\n\n1. ${languageText.show}\n2. ${languageText.sleepMode}`,
+              `${"افرادی شما را لایک کردند. یه نگاهی بنداز "}\n\n1. ${"نمایش"}\n2. ${"حالت خواب"}`,
               {
                 reply_markup: {
                   keyboard: [[{ text: "1 🚀" }, { text: "2" }]],
@@ -1184,22 +796,18 @@ const processStatement = async (ctx) => {
         } else {
           try {
             ctx.reply(
-              `${languageText.sleepMode}: ${
-                existingUser.sleep
-                  ? languageText.active
-                  : languageText.inactive
-              }\n\n${languageText.sleepDetail}`,
+              `${"حالت خواب"}: ${
+                existingUser.sleep ? "فعال" : "غیرفعال"
+              }\n\n${"اگر حالت خواب فعال باشد ، لایکی دریافت نمیکنید"}`,
               {
                 reply_markup: {
                   keyboard: [
                     [
                       {
-                        text: existingUser.sleep
-                          ? languageText.inactive
-                          : languageText.active,
+                        text: existingUser.sleep ? "غیرفعال" : "فعال",
                       },
                     ],
-                    [{ text: languageText.goBack }],
+                    [{ text: "بازگشت" }],
                   ],
                   resize_keyboard: true,
                   one_time_keyboard: false,
@@ -1225,7 +833,7 @@ const processStatement = async (ctx) => {
               user: updatedUser,
             });
 
-            await ctx.reply(`${languageText.likesText} :`, {
+            await ctx.reply(`${"لایک ها"} :`, {
               reply_markup: {
                 keyboard: [[{ text: "❌" }, { text: "❤️" }]],
                 resize_keyboard: true,
@@ -1255,27 +863,35 @@ const processStatement = async (ctx) => {
                 const fullName = userFromRedis.likers[0].fullName;
                 const age = userFromRedis.likers[0].age;
                 const state = userFromRedis.likers[0].state;
-                const flag = userFromRedis.likers[0].flag;
                 const bio = userFromRedis.likers[0].bio;
-                const inviteCode = userFromRedis.likers[0].inviteCode;
+                const inviteCode_ =
+                  userFromRedis.likers[0].inviteCode;
 
-                await ctx.replyWithMediaGroup(
-                  photos.map((photo, index) => ({
-                    type: "photo",
-                    media: photo,
-                    caption:
-                      index === 0
-                        ? `${fullName}, ${age}, ${
-                            flag + " " + state
-                          } ${bio ? "\n" + bio : ""}\n/user_${
-                            inviteCode || "not_found"
-                          }`
-                        : undefined,
-                  })),
-                );
+                try {
+                  await ctx.replyWithPhoto(
+                    {
+                      source: fs.createReadStream(photos[0]),
+                    },
+                    {
+                      caption: `${fullName}, ${age}, ${state} ${
+                        bio ? "\n" + bio : ""
+                      } \n/user_${inviteCode_ || "not_found"}`,
+                    },
+                  );
+                } catch (error) {
+                  try {
+                    await ctx.reply(
+                      `${fullName}, ${age}, ${state} ${
+                        bio ? "\n" + bio : ""
+                      } \n/user_${inviteCode_ || "not_found"}`,
+                    );
+                  } catch (error) {
+                    console.log(error);
+                  }
+                }
               }
             } else {
-              ctx.reply(languageText.noLikes);
+              ctx.reply("شما لایکی ندارید");
             }
           } catch (error) {
             console.log(error);
@@ -1290,22 +906,18 @@ const processStatement = async (ctx) => {
             });
 
             ctx.reply(
-              `${languageText.sleepMode}: ${
-                existingUser.sleep
-                  ? languageText.active
-                  : languageText.inactive
-              }\n\n${languageText.sleepDetail}`,
+              `${"حالت خواب"}: ${
+                existingUser.sleep ? "فعال" : "غیرفعال"
+              }\n\n${"اگر حالت خواب فعال باشد ، لایکی دریافت نمیکنید"}`,
               {
                 reply_markup: {
                   keyboard: [
                     [
                       {
-                        text: existingUser.sleep
-                          ? languageText.inactive
-                          : languageText.active,
+                        text: existingUser.sleep ? "غیرفعال" : "فعال",
                       },
                     ],
-                    [{ text: languageText.goBack }],
+                    [{ text: "بازگشت" }],
                   ],
                   resize_keyboard: true,
                   one_time_keyboard: false,
@@ -1317,7 +929,17 @@ const processStatement = async (ctx) => {
             console.log(error);
           }
         } else {
-          ctx.reply("no such option");
+          await ctx.reply(
+            `${"افرادی شما را لایک کردند. یه نگاهی بنداز "}\n\n1. ${"نمایش"}\n2. ${"حالت خواب"}`,
+            {
+              reply_markup: {
+                keyboard: [[{ text: "1 🚀" }, { text: "2" }]],
+                resize_keyboard: true,
+                one_time_keyboard: false,
+                is_persistent: true,
+              },
+            },
+          );
         }
       } else if (userStep === "notifications") {
         if (ctx?.message?.text === "❤️") {
@@ -1433,105 +1055,105 @@ const processStatement = async (ctx) => {
 
                 console.log("notif step 3 ---");
 
-                if (likerUserName) {
-                  await ctx.reply(
-                    ` ${languageText.youAnd} ${fullName} ${languageText.matched} 🎉\n\n${languageText.startChatWithButton}`,
-                    {
-                      reply_markup: {
-                        inline_keyboard: [
-                          [
-                            {
-                              text: languageText.startChat,
-                              url: `https://t.me/${likerUserName}?text=${languageText.hello} ${fullName} ${languageText.imFromPounes}`,
-                            },
-                          ],
+                // if (likerUserName) {
+                await ctx.reply(
+                  ` ${"شما و"} ${fullName} ${"با همدیگر مطابقت داده شده‌اید!"} 🎉\n\n${"از طریق دکمه زیر می‌توانید با هم چت کنید:"}`,
+                  {
+                    reply_markup: {
+                      inline_keyboard: [
+                        [
+                          {
+                            text: "شروع چت 💬",
+                            url: `https://ble.ir/${likerUserName}?text=${"سلام"} ${fullName} ${"من از پونس هستم"}`,
+                          },
                         ],
-                      },
+                      ],
                     },
-                  );
-                } else {
-                  try {
-                    await ctx.reply(
-                      ` ${languageText.youAnd} ${fullName} ${languageText.matched} 🎉\n\n${languageText.startChatWithButton}`,
-                      {
-                        reply_markup: {
-                          inline_keyboard: [
-                            [
-                              {
-                                text: languageText.startChat,
-                                url: `tg://user?id=${likerTelegramId}&text=${languageText.hello} ${fullName} ${languageText.imFromPounes}`,
-                              },
-                            ],
-                          ],
-                        },
-                      },
-                    );
-                  } catch (error) {
-                    if (usersMap.get(likerTelegramId)) {
-                      usersMap.get(
-                        likerTelegramId,
-                      ).user.unavailablePv = true;
-                      usersMap.set(likerTelegramId, {
-                        time: Date.now(),
-                        user: usersMap.get(likerTelegramId).user,
-                      });
-                    } else {
-                      const updatedUser = await User.findOneAndUpdate(
-                        { telegramId: likerTelegramId },
-                        { unavailablePv: true },
-                        { new: true },
-                      );
-                      usersMap.set(likerTelegramId, {
-                        time: Date.now(),
-                        user: updatedUser,
-                      });
-                    }
-                  }
-                }
+                  },
+                );
+                // } else {
+                //   try {
+                //     await ctx.reply(
+                //       ` ${"شما و"} ${fullName} ${"با همدیگر مطابقت داده شده‌اید!"} 🎉\n\n${"از طریق دکمه زیر می‌توانید با هم چت کنید:"}`,
+                //       {
+                //         reply_markup: {
+                //           inline_keyboard: [
+                //             [
+                //               {
+                //                 text: "شروع چت 💬",
+                //                 url: `tg://user?id=${likerTelegramId}&text=${"سلام"} ${fullName} ${"من از پونس هستم"}`,
+                //               },
+                //             ],
+                //           ],
+                //         },
+                //       },
+                //     );
+                //   } catch (error) {
+                //     if (usersMap.get(likerTelegramId)) {
+                //       usersMap.get(
+                //         likerTelegramId,
+                //       ).user.unavailablePv = true;
+                //       usersMap.set(likerTelegramId, {
+                //         time: Date.now(),
+                //         user: usersMap.get(likerTelegramId).user,
+                //       });
+                //     } else {
+                //       const updatedUser = await User.findOneAndUpdate(
+                //         { telegramId: likerTelegramId },
+                //         { unavailablePv: true },
+                //         { new: true },
+                //       );
+                //       usersMap.set(likerTelegramId, {
+                //         time: Date.now(),
+                //         user: updatedUser,
+                //       });
+                //     }
+                //   }
+                // }
 
-                if (userName) {
-                  await bot.telegram.sendMessage(
-                    +likerTelegramId,
-                    ` ${languageText.youAnd} ${existingUser.fullName} ${languageText.matched} 🎉\n\n${languageText.startChatWithButton}`,
-                    {
-                      reply_markup: {
-                        inline_keyboard: [
-                          [
-                            {
-                              text: languageText.startChat,
-                              url: `https://t.me/${userName}?text=${languageText.hello} ${existingUser.fullName} ${languageText.imFromPounes}`,
-                            },
-                          ],
+                // if (userName) {
+                await bot.telegram.sendMessage(
+                  +likerTelegramId,
+                  ` ${"شما و"} ${existingUser.fullName} ${"با همدیگر مطابقت داده شده‌اید!"} 🎉\n\n${"از طریق دکمه زیر می‌توانید با هم چت کنید:"}`,
+                  {
+                    reply_markup: {
+                      inline_keyboard: [
+                        [
+                          {
+                            text: "شروع چت 💬",
+                            url: `https://ble.ir/${userName}?text=${"سلام"} ${existingUser.fullName} ${"من از پونس هستم"}`,
+                          },
                         ],
-                      },
+                      ],
                     },
-                  );
-                } else {
-                  try {
-                    await bot.telegram.sendMessage(
-                      +likerTelegramId,
-                      `${languageText.youAnd} ${existingUser.fullName} ${languageText.matched} 🎉\n\n${languageText.startChatWithButton}`,
-                      {
-                        reply_markup: {
-                          inline_keyboard: [
-                            [
-                              {
-                                text: languageText.startChat,
-                                url: `tg://user?id=${telegramId}&text=${languageText.hello} ${fullName} ${languageText.imFromPounes}`,
-                              },
-                            ],
-                          ],
-                        },
-                      },
-                    );
-                  } catch (error) {
-                    existingUser.unavailablePv = true;
-                    usersMap.set(telegramId, {
-                      time: Date.now(),
-                      user: existingUser,
-                    });
-                  }
-                }
+                  },
+                );
+                // } else {
+                //   try {
+                //     await bot.telegram.sendMessage(
+                //       +likerTelegramId,
+                //       `${"شما و"} ${existingUser.fullName} ${"با همدیگر مطابقت داده شده‌اید!"} 🎉\n\n${"از طریق دکمه زیر می‌توانید با هم چت کنید:"}`,
+                //       {
+                //         reply_markup: {
+                //           inline_keyboard: [
+                //             [
+                //               {
+                //                 text: "شروع چت 💬",
+                //                 url: `tg://user?id=${telegramId}&text=${"سلام"} ${fullName} ${"من از پونس هستم"}`,
+                //               },
+                //             ],
+                //           ],
+                //         },
+                //       },
+                //     );
+                //   } catch (error) {
+                //     existingUser.unavailablePv = true;
+                //     usersMap.set(telegramId, {
+                //       time: Date.now(),
+                //       user: existingUser,
+                //     });
+                //   }
+                // }
 
                 console.log("matches step -------------");
 
@@ -1639,26 +1261,33 @@ const processStatement = async (ctx) => {
                   const fullName = list[0].fullName;
                   const age = list[0].age;
                   const state = list[0].state;
-                  const flag = list[0].flag;
                   const bio = list[0].bio;
-                  const inviteCode = list[0].inviteCode;
+                  const inviteCode_ = list[0].inviteCode;
 
-                  await ctx.replyWithMediaGroup(
-                    photos.map((photo, index) => ({
-                      type: "photo",
-                      media: photo,
-                      caption:
-                        index === 0
-                          ? `${fullName}, ${age}, ${
-                              flag + " " + state
-                            } ${bio ? "\n" + bio : ""}\n/user_${
-                              inviteCode || "not_found"
-                            }`
-                          : undefined,
-                    })),
-                  );
+                  try {
+                    await ctx.replyWithPhoto(
+                      {
+                        source: fs.createReadStream(photos[0]),
+                      },
+                      {
+                        caption: `${fullName}, ${age}, ${state} ${
+                          bio ? "\n" + bio : ""
+                        } \n/user_${inviteCode_ || "not_found"}`,
+                      },
+                    );
+                  } catch (error) {
+                    try {
+                      await ctx.reply(
+                        `${fullName}, ${age}, ${state} ${
+                          bio ? "\n" + bio : ""
+                        } \n/user_${inviteCode_ || "not_found"}`,
+                      );
+                    } catch (error) {
+                      console.log(error);
+                    }
+                  }
                 } else {
-                  ctx.reply(languageText.endOfLikes);
+                  ctx.reply("پایان لایک ها");
                   existingUser.userStep = "menu";
 
                   usersMap.set(telegramId, {
@@ -1668,7 +1297,7 @@ const processStatement = async (ctx) => {
                   // await existingUser.save();
 
                   ctx.reply(
-                    `1. ${languageText.viewProfiles}\n2. ${languageText.myProfile}\n3. ${languageText.sleepMode}\n----------------------------\n4. ${languageText.inviteFriendsText}`,
+                    `1. ${"مشاهده پروفایل ها"}\n2. ${"پروفایل من"}\n3. ${"حالت خواب"}\n----------------------------\n4. ${"دوستان خود را دعوت کنید تا لایک های بیشتری دریافت کنید 😎"}`,
                     {
                       reply_markup: {
                         keyboard: [
@@ -1689,12 +1318,12 @@ const processStatement = async (ctx) => {
                 // end show nextUser ---------------------------------
 
                 // await ctx.reply(
-                //   `<a href="https://t.me/${"Abolfazl021aaaa"}?text=سلام ${fullName}، از طریق تلگرام با شما آشنا شدم 😊">💬 شروع چت</a>`,
+                //   `<a href="https://ble.ir/${"Abolfazl021aaaa"}?text=سلام ${fullName}، از طریق تلگرام با شما آشنا شدم 😊">💬 شروع چت</a>`,
                 //   { parse_mode: "HTML" },
                 // );
               } else {
                 console.log("notif step 3-1 ---");
-                ctx.reply(languageText.endOfLikes);
+                ctx.reply("پایان لایک ها");
                 existingUser.userStep = "menu";
                 usersMap.set(telegramId, {
                   time: Date.now(),
@@ -1703,7 +1332,7 @@ const processStatement = async (ctx) => {
                 // await existingUser.save();
 
                 ctx.reply(
-                  `1. ${languageText.viewProfiles}\n2. ${languageText.myProfile}\n3. ${languageText.sleepMode}\n----------------------------\n4. ${languageText.inviteFriendsText}`,
+                  `1. ${"مشاهده پروفایل ها"}\n2. ${"پروفایل من"}\n3. ${"حالت خواب"}\n----------------------------\n4. ${"دوستان خود را دعوت کنید تا لایک های بیشتری دریافت کنید 😎"}`,
                   {
                     reply_markup: {
                       keyboard: [
@@ -1723,7 +1352,7 @@ const processStatement = async (ctx) => {
                 return;
               }
             } else {
-              ctx.reply(languageText.noLikesText);
+              ctx.reply("شما لایکی ندارید");
             }
           } catch (error) {
             console.log(error);
@@ -1780,26 +1409,33 @@ const processStatement = async (ctx) => {
                   const fullName = list[0].fullName;
                   const age = list[0].age;
                   const state = list[0].state;
-                  const flag = list[0].flag;
                   const bio = list[0].bio;
-                  const inviteCode = list[0].inviteCode;
+                  const inviteCode_ = list[0].inviteCode;
 
-                  await ctx.replyWithMediaGroup(
-                    photos.map((photo, index) => ({
-                      type: "photo",
-                      media: photo,
-                      caption:
-                        index === 0
-                          ? `${fullName}, ${age}, ${
-                              flag + " " + state
-                            } ${bio ? "\n" + bio : ""}\n/user_${
-                              inviteCode || "not_found"
-                            }`
-                          : undefined,
-                    })),
-                  );
+                  try {
+                    await ctx.replyWithPhoto(
+                      {
+                        source: fs.createReadStream(photos[0]),
+                      },
+                      {
+                        caption: `${fullName}, ${age}, ${state} ${
+                          bio ? "\n" + bio : ""
+                        } \n/user_${inviteCode_ || "not_found"}`,
+                      },
+                    );
+                  } catch (error) {
+                    try {
+                      await ctx.reply(
+                        `${fullName}, ${age}, ${state} ${
+                          bio ? "\n" + bio : ""
+                        } \n/user_${inviteCode_ || "not_found"}`,
+                      );
+                    } catch (error) {
+                      console.log(error);
+                    }
+                  }
                 } else {
-                  ctx.reply(languageText.endOfLikes);
+                  ctx.reply("پایان لایک ها");
                   existingUser.userStep = "menu";
 
                   usersMap.set(telegramId, {
@@ -1809,7 +1445,7 @@ const processStatement = async (ctx) => {
                   // await existingUser.save();
 
                   ctx.reply(
-                    `1. ${languageText.viewProfiles}\n2. ${languageText.myProfile}\n3. ${languageText.sleepMode}\n----------------------------\n4. ${languageText.inviteFriendsText}`,
+                    `1. ${"مشاهده پروفایل ها"}\n2. ${"پروفایل من"}\n3. ${"حالت خواب"}\n----------------------------\n4. ${"دوستان خود را دعوت کنید تا لایک های بیشتری دریافت کنید 😎"}`,
                     {
                       reply_markup: {
                         keyboard: [
@@ -1830,12 +1466,12 @@ const processStatement = async (ctx) => {
                 // end show nextUser ---------------------------------
 
                 // await ctx.reply(
-                //   `<a href="https://t.me/${"Abolfazl021aaaa"}?text=سلام ${fullName}، از طریق تلگرام با شما آشنا شدم 😊">💬 شروع چت</a>`,
+                //   `<a href="https://ble.ir/${"Abolfazl021aaaa"}?text=سلام ${fullName}، از طریق تلگرام با شما آشنا شدم 😊">💬 شروع چت</a>`,
                 //   { parse_mode: "HTML" },
                 // );
               } else {
                 console.log("notif step 3-1 ---");
-                ctx.reply(languageText.endOfLikes);
+                ctx.reply("پایان لایک ها");
                 existingUser.userStep = "menu";
                 usersMap.set(telegramId, {
                   time: Date.now(),
@@ -1844,7 +1480,7 @@ const processStatement = async (ctx) => {
                 // await existingUser.save();
 
                 ctx.reply(
-                  `1. ${languageText.viewProfiles}\n2. ${languageText.myProfile}\n3. ${languageText.sleepMode}\n----------------------------\n4. ${languageText.inviteFriendsText}`,
+                  `1. ${"مشاهده پروفایل ها"}\n2. ${"پروفایل من"}\n3. ${"حالت خواب"}\n----------------------------\n4. ${"دوستان خود را دعوت کنید تا لایک های بیشتری دریافت کنید 😎"}`,
                   {
                     reply_markup: {
                       keyboard: [
@@ -1864,13 +1500,19 @@ const processStatement = async (ctx) => {
                 return;
               }
             } else {
-              ctx.reply(languageText.noLikesText);
+              ctx.reply("شما لایکی ندارید");
             }
           } catch (error) {
             console.log(error);
           }
         } else {
-          ctx.reply("no such option");
+          await ctx.reply(`${"لایک ها"} :`, {
+            reply_markup: {
+              keyboard: [[{ text: "❌" }, { text: "❤️" }]],
+              resize_keyboard: true,
+              is_persistent: true,
+            },
+          });
         }
       } else if (userStep === "directMessage") {
         if (ctx?.message?.text) {
@@ -1885,7 +1527,6 @@ const processStatement = async (ctx) => {
               fullName,
               age,
               state,
-              flag,
               bio,
               profileImages,
               inviteCode: inviteCode_from_forYouList,
@@ -1897,7 +1538,7 @@ const processStatement = async (ctx) => {
             try {
               await bot.telegram.sendMessage(
                 +existingUser.lastViewed,
-                `${languageText.youHaveANewMessageFrom} ${
+                `${"شما یک پیام جدید از"} ${
                   existingUser.fullName
                 } :\n\n${ctx?.message?.text}\n/user_${
                   generateInviteCode(telegramId) || "not_found"
@@ -1924,7 +1565,7 @@ const processStatement = async (ctx) => {
               user: existingUser,
             });
             // await existingUser.save();
-            await ctx.reply(languageText.messageSent, {
+            await ctx.reply("پیام شما ارسال شد ✅", {
               reply_markup: {
                 keyboard: [
                   [
@@ -1939,20 +1580,29 @@ const processStatement = async (ctx) => {
               },
             });
 
-            await ctx.replyWithMediaGroup(
-              photos.map((photo, index) => ({
-                type: "photo",
-                media: photo,
-                caption:
-                  index === 0
-                    ? `${fullName}, ${age}, ${flag + " " + state} ${
-                        bio ? "\n" + bio : ""
-                      } \n/user_${
-                        inviteCode_from_forYouList || "not_found"
-                      }`
-                    : undefined,
-              })),
-            );
+            try {
+              await ctx.replyWithPhoto(
+                {
+                  source: fs.createReadStream(photos[0]),
+                },
+                {
+                  caption: `${fullName}, ${age}, ${state} ${
+                    bio ? "\n" + bio : ""
+                  } \n/user_${inviteCode_from_forYouList || "not_found"}`,
+                },
+              );
+            } catch (error) {
+              try {
+                await ctx.reply(
+                  `${fullName}, ${age}, ${state} ${
+                    bio ? "\n" + bio : ""
+                  } \n/user_${inviteCode_from_forYouList || "not_found"}`,
+                );
+              } catch (error) {
+                console.log(error);
+              }
+            }
+
             existingUser.lastViewed =
               +forYouList.get(telegramId)[0].telegramId; // نیاز به ذخیره کردنش نیست
             usersMap.set(telegramId, {
@@ -1963,17 +1613,17 @@ const processStatement = async (ctx) => {
             console.log(error);
           }
         } else {
-          ctx.reply(languageText.pleaseSendOnlyTextMessage);
+          ctx.reply("لطفا فقط پیام متنی ارسال کنید.");
         }
       } else if (userStep === "answer") {
-        if (ctx?.message?.text === languageText.goBack) {
+        if (ctx?.message?.text === "بازگشت") {
           existingUser.userStep = "menu";
           usersMap.set(telegramId, {
             time: Date.now(),
             user: existingUser,
           });
           ctx.reply(
-            `1. ${languageText.viewProfiles}\n2. ${languageText.myProfile}\n3. ${languageText.sleepMode}\n----------------------------\n4. ${languageText.inviteFriendsText}`,
+            `1. ${"مشاهده پروفایل ها"}\n2. ${"پروفایل من"}\n3. ${"حالت خواب"}\n----------------------------\n4. ${"دوستان خود را دعوت کنید تا لایک های بیشتری دریافت کنید 😎"}`,
             {
               reply_markup: {
                 keyboard: [
@@ -1992,7 +1642,9 @@ const processStatement = async (ctx) => {
           return;
         } else if (ctx?.message?.text) {
           if (!existingUser.lastAnsweredMessage) {
-            ctx.reply(languageText.somethingWentWrong);
+            ctx.reply(
+              "مشکلی پیش آمده است لطفا به پشتیبانی اطلاع دهید (آیدی پشتیبانی در بیو)",
+            );
             return;
           }
           console.log({
@@ -2015,7 +1667,7 @@ const processStatement = async (ctx) => {
             try {
               await bot.telegram.sendMessage(
                 +existingUser.lastAnsweredMessage,
-                `${languageText.youHaveANewMessageFrom} ${
+                `${"شما یک پیام جدید از"} ${
                   existingUser.fullName
                 } :\n\n${ctx?.message?.text}\n/user_${
                   generateInviteCode(telegramId) || "not_found"
@@ -2042,7 +1694,7 @@ const processStatement = async (ctx) => {
               user: existingUser,
             });
             // await existingUser.save();
-            await ctx.reply(languageText.messageSent, {
+            await ctx.reply("پیام شما ارسال شد ✅", {
               reply_markup: {
                 keyboard: [
                   [
@@ -2057,20 +1709,29 @@ const processStatement = async (ctx) => {
               },
             });
 
-            await ctx.replyWithMediaGroup(
-              photos.map((photo, index) => ({
-                type: "photo",
-                media: photo,
-                caption:
-                  index === 0
-                    ? `${fullName}, ${age}, ${flag + " " + state} ${
-                        bio ? "\n" + bio : ""
-                      } \n/user_${
-                        inviteCode_from_forYouList || "not_found"
-                      }`
-                    : undefined,
-              })),
-            );
+            try {
+              await ctx.replyWithPhoto(
+                {
+                  source: fs.createReadStream(photos[0]),
+                },
+                {
+                  caption: `${fullName}, ${age}, ${state} ${
+                    bio ? "\n" + bio : ""
+                  } \n/user_${inviteCode_from_forYouList || "not_found"}`,
+                },
+              );
+            } catch (error) {
+              try {
+                await ctx.reply(
+                  `${fullName}, ${age}, ${state} ${
+                    bio ? "\n" + bio : ""
+                  } \n/user_${inviteCode_from_forYouList || "not_found"}`,
+                );
+              } catch (error) {
+                console.log(error);
+              }
+            }
+
             existingUser.lastViewed =
               +forYouList.get(telegramId)[0].telegramId; // نیاز به ذخیره کردنش نیست
             usersMap.set(telegramId, {
@@ -2081,54 +1742,54 @@ const processStatement = async (ctx) => {
             console.log(error);
           }
         } else {
-          ctx.reply(languageText.pleaseSendOnlyTextMessage);
+          ctx.reply("لطفا فقط پیام متنی ارسال کنید.");
         }
       } else if (userStep === "userProfile") {
-        if (ctx?.message?.text === languageText.report) {
+        if (ctx?.message?.text === "گزارش") {
           ctx.reply(
-            `${languageText.whyReport} /user_${existingUser.userProfile.inviteCode}`,
+            `${"چرا میخوای این کاربر را گزارش کنی؟"} /user_${existingUser?.inviteCode}`,
             {
               reply_markup: {
                 inline_keyboard: [
                   [
                     {
-                      text: languageText.reportAdvertisement, // "تبلیغات"
+                      text: "تبلیغات", // "تبلیغات"
                       callback_data: `report_advertisement`,
                     },
                   ],
                   [
                     {
-                      text: languageText.reportInappropriateContent, // "ارسال محتوای غیر اخلاقی"
+                      text: "ارسال محتوای غیر اخلاقی", // "ارسال محتوای غیر اخلاقی"
                       callback_data: `report_inappropriate_content`,
                     },
                   ],
                   [
                     {
-                      text: languageText.reportHarassment, // "ایجاد مزاحمت"
+                      text: "ایجاد مزاحمت", // "ایجاد مزاحمت"
                       callback_data: `report_harassment`,
                     },
                   ],
                   [
                     {
-                      text: languageText.reportPhoneNumber, // "پخش شماره موبایل یا اطلاعات شخصی دیگران"
+                      text: "پخش شماره موبایل یا اطلاعات شخصی دیگران", // "پخش شماره موبایل یا اطلاعات شخصی دیگران"
                       callback_data: `report_phone_number`,
                     },
                   ],
                   [
                     {
-                      text: languageText.reportInappropriateProfile, // "کلمات یا عکس غیراخلاقی در پروفایل"
+                      text: "کلمات یا عکس غیراخلاقی در پروفایل", // "کلمات یا عکس غیراخلاقی در پروفایل"
                       callback_data: `report_inappropriate_profile`,
                     },
                   ],
                   [
                     {
-                      text: languageText.reportIncorrectGender, // "جنسیت اشتباه در پروقایل"
+                      text: "جنسیت اشتباه در پروقایل", // "جنسیت اشتباه در پروقایل"
                       callback_data: `report_incorrect_gender`,
                     },
                   ],
                   [
                     {
-                      text: languageText.reportOther, // "دیگر موارد ..."
+                      text: "دیگر موارد ...", // "دیگر موارد ..."
                       callback_data: `report_other`,
                     },
                   ],
@@ -2136,16 +1797,14 @@ const processStatement = async (ctx) => {
               },
             },
           );
-        } else if (
-          ctx?.message?.text === languageText.backToMainMenu
-        ) {
+        } else if (ctx?.message?.text === "بازگشت به منوی اصلی") {
           existingUser.userStep = "menu";
           usersMap.set(telegramId, {
             time: Date.now(),
             user: existingUser,
           });
           ctx.reply(
-            `1. ${languageText.viewProfiles}\n2. ${languageText.myProfile}\n3. ${languageText.sleepMode}\n----------------------------\n4. ${languageText.inviteFriendsText}`,
+            `1. ${"مشاهده پروفایل ها"}\n2. ${"پروفایل من"}\n3. ${"حالت خواب"}\n----------------------------\n4. ${"دوستان خود را دعوت کنید تا لایک های بیشتری دریافت کنید 😎"}`,
             {
               reply_markup: {
                 keyboard: [
@@ -2168,7 +1827,7 @@ const processStatement = async (ctx) => {
             user: existingUser,
           });
           ctx.reply(
-            `1. ${languageText.viewProfiles}\n2. ${languageText.myProfile}\n3. ${languageText.sleepMode}\n----------------------------\n4. ${languageText.inviteFriendsText}`,
+            `1. ${"مشاهده پروفایل ها"}\n2. ${"پروفایل من"}\n3. ${"حالت خواب"}\n----------------------------\n4. ${"دوستان خود را دعوت کنید تا لایک های بیشتری دریافت کنید 😎"}`,
             {
               reply_markup: {
                 keyboard: [
@@ -2196,7 +1855,7 @@ const processStatement = async (ctx) => {
         await inviteByUser.save();
         await bot.telegram.sendMessage(
           +inviteByUser.telegramId,
-          languageText.giftLikeCount,
+          "ممون از دعوت شما . 100 لایک هدیه دریافت کردید.",
         );
 
         if (usersMap.get(+inviteByUser.telegramId)) {
@@ -2217,13 +1876,9 @@ const processStatement = async (ctx) => {
 
       await registerInBot(
         ctx,
-        langsTextShow,
         ages,
-        countriesTextShow,
-        texts,
         chunkArray,
         telegramId,
-        languages,
         telegramName,
         saveduser,
         redisClient,
@@ -2242,27 +1897,295 @@ bot.start(async (ctx) => {
   console.log("/start");
   await processStatement(ctx);
 });
+
+bot.action(/answer_message_(.+)/, async (ctx) => {
+  const telegramId = ctx.match[1]; // این یک string است
+
+  if (usersMap.get(ctx.from.id)) {
+    const existingUser = usersMap.get(ctx.from.id).user;
+    existingUser.userStep = "answer";
+    existingUser.lastAnsweredMessage = +telegramId;
+    usersMap.set(ctx.from.id, {
+      user: existingUser,
+      time: Date.now(),
+    });
+  } else {
+    const existingUser = await User.findOne({
+      telegramId: ctx.from.id,
+    });
+    existingUser.userStep = "answer";
+    existingUser.lastAnsweredMessage = +telegramId;
+    usersMap.set(ctx.from.id, {
+      user: existingUser,
+      time: Date.now(),
+    });
+  }
+
+  await ctx.answerCbQuery();
+  await ctx.reply("پیام خود را ارسال کنید 🧐👇🏽", {
+    reply_markup: {
+      keyboard: [[{ text: "بازگشت" }]],
+      resize_keyboard: true,
+      is_persistent: true,
+    },
+  });
+});
+
+bot.hears(/\/user_(.+)/, async (ctx) => {
+  const userId = ctx.match[1]; // مقدار بعد از user_
+  const telegramId___ = ctx.from.id;
+
+  if (usersMap.get(ctx.from.id)) {
+    const existingUser = usersMap.get(ctx.from.id).user;
+  } else {
+    const existingUser = await User.findOne({
+      telegramId: ctx.from.id,
+    });
+  }
+
+  if (!userId || userId === "not_found") {
+    ctx.reply("کد معرف یافت نشد.");
+    return;
+  }
+
+  try {
+    const {
+      fullName,
+      age,
+      state,
+      flag,
+      profileImages,
+      moreInformation,
+      telegramId,
+      inviteCode,
+    } = await User.findOne({ inviteCode: userId });
+
+    if (usersMap.get(telegramId___)) {
+      const existingUser = usersMap.get(telegramId___).user;
+      existingUser.userProfile = {
+        telegramId,
+        fullName,
+        age,
+        state,
+        flag,
+        profileImages,
+        inviteCode,
+        bio: moreInformation?.bio,
+      };
+      existingUser.userStep = "userProfile";
+      usersMap.set(telegramId___, {
+        user: existingUser,
+        time: Date.now(),
+      });
+    } else {
+      const existingUser = await User.findOneAndUpdate(
+        { telegramId: telegramId___ },
+        {
+          userStep: "userProfile",
+          userProfile: {
+            telegramId,
+            fullName,
+            age,
+            state,
+            profileImages,
+            bio: moreInformation?.bio,
+            inviteCode,
+          },
+        },
+        { new: true },
+      );
+      usersMap.set(telegramId___, {
+        user: existingUser,
+        time: Date.now(),
+      });
+    }
+
+    console.log({ profileImages });
+    const photo = profileImages[0];
+    const bio = moreInformation?.bio;
+
+    try {
+      await ctx.replyWithPhoto(
+        {
+          source: fs.createReadStream(photo),
+        },
+        {
+          caption: `${fullName}, ${age}, ${state} ${
+            bio ? "\n" + bio : ""
+          }\n/user_${userId || "not_found"}`,
+          reply_markup: {
+            keyboard: [
+              [
+                {
+                  text: "گزارش",
+                },
+              ],
+              [
+                {
+                  text: "بازگشت به منوی اصلی",
+                },
+              ],
+            ],
+            resize_keyboard: true,
+            is_persistent: true,
+          },
+        },
+      );
+    } catch (error) {
+      try {
+        await ctx.reply(
+          `${fullName}, ${age}, ${state} ${
+            bio ? "\n" + bio : ""
+          }\n/user_${userId || "not_found"}`,
+          {
+            reply_markup: {
+              keyboard: [
+                [
+                  {
+                    text: "گزارش",
+                  },
+                ],
+                [
+                  {
+                    text: "بازگشت به منوی اصلی",
+                  },
+                ],
+              ],
+              resize_keyboard: true,
+              is_persistent: true,
+            },
+          },
+        );
+      } catch (error) {
+        console.log(error);
+      }
+    }
+  } catch (error) {
+    console.log(error);
+  }
+});
+
 bot.on("message", async (ctx) => {
   await processStatement(ctx);
 });
 
-// bot.start(async (ctx) => {
-//   await ctx.reply(`قبل از خرید حتما فیلتر شکن خود را خاموش کنید ♦️`, {
-//     reply_markup: {
-//       inline_keyboard: [
-//         [
-//           {
-//             text: "پرداخت",
-//             url: "https://google.com",
-//           },
-//         ],
-//       ],
-//     },
-//   });
-// });
-bot.help((ctx) => ctx.reply("Send me a sticker"));
-bot.on(message("sticker"), (ctx) => ctx.reply("👍"));
-bot.hears("hi", (ctx) => ctx.reply("Hey there"));
+bot.action("done_start", async (ctx) => {
+  try {
+    await ctx.answerCbQuery(); // حذف لودینگ دکمه
+
+    // شبیه‌سازی اجرای دستور /start
+    await bot.handleUpdate({
+      update_id: Date.now(),
+      message: {
+        message_id: Date.now(),
+        from: ctx.from,
+        chat: ctx.chat,
+        date: Math.floor(Date.now() / 1000),
+        text: "/start",
+      },
+    });
+  } catch (error) {
+    console.log(error);
+  }
+});
+
+const reportAction = async (reportType, telegramId___, ctx) => {
+  try {
+    let existingUser;
+
+    if (usersMap.get(telegramId___)) {
+      existingUser = usersMap.get(telegramId___).user;
+    } else {
+      existingUser = await User.findOne({
+        telegramId: telegramId___,
+      });
+    }
+
+    if (!existingUser.userProfile.telegramId) {
+      await ctx.reply("کاربر یافت نشد.");
+      return;
+    }
+
+    const reportedId =
+      existingUser.userProfile.telegramId &&
+      +existingUser.userProfile.telegramId; // مقدار بعد از report_
+
+    let report = await Report.findOne({ telegramId: reportedId });
+    if (!report) {
+      report = await Report.create({ telegramId: reportedId });
+    }
+    if (
+      report.reports.find(
+        (report) => report.reportedTelegramId === telegramId___,
+      )
+    ) {
+      await ctx.reply("شما قبلا برای این کاربر گزارش داده اید.");
+      return;
+    }
+    report.reports.push({
+      type: reportType,
+      reportedTelegramId: telegramId___,
+    });
+    await report.save();
+    await ctx.reply("گزارش شما ثبت شد ✅");
+    existingUser.userStep = "menu";
+    usersMap.set(telegramId___, {
+      user: existingUser,
+      time: Date.now(),
+    });
+    ctx.reply(
+      `1. ${"مشاهده پروفایل ها"}\n2. ${"پروفایل من"}\n3. ${"حالت خواب"}\n----------------------------\n4. ${"دوستان خود را دعوت کنید تا لایک های بیشتری دریافت کنید 😎"}`,
+      {
+        reply_markup: {
+          keyboard: [
+            [
+              { text: "1 🚀" },
+              { text: "2" },
+              { text: "3" },
+              { text: "4" },
+            ],
+          ],
+          resize_keyboard: true,
+          is_persistent: true,
+          one_time_keyboard: false,
+        },
+      },
+    );
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+bot.action("report_advertisement", async (ctx) => {
+  await reportAction("report_advertisement", ctx.from.id, ctx);
+});
+bot.action("report_inappropriate_content", async (ctx) => {
+  await reportAction(
+    "report_inappropriate_content",
+    ctx.from.id,
+    ctx,
+  );
+});
+bot.action("report_harassment", async (ctx) => {
+  await reportAction("report_harassment", ctx.from.id, ctx);
+});
+bot.action("report_phone_number", async (ctx) => {
+  await reportAction("report_phone_number", ctx.from.id, ctx);
+});
+bot.action("report_inappropriate_profile", async (ctx) => {
+  await reportAction(
+    "report_inappropriate_profile",
+    ctx.from.id,
+    ctx,
+  );
+});
+bot.action("report_incorrect_gender", async (ctx) => {
+  await reportAction("report_incorrect_gender", ctx.from.id, ctx);
+});
+bot.action("report_other", async (ctx) => {
+  await reportAction("report_other", ctx.from.id, ctx);
+});
+
 bot.launch();
 
 // Enable graceful stop

@@ -1,6 +1,4 @@
-const axios = require("axios");
 const User = require("../models/User");
-const countries = require("../data/countries.json");
 const { uploadImageFromUrl } = require("./uploadImageFromUrl");
 const badWords = require("../data/words");
 const protobuf = require("protobufjs");
@@ -53,13 +51,9 @@ const states = [
 
 const registerInBot = async (
   ctx,
-  langsTextShow,
   ages,
-  countriesTextShow,
-  texts,
   chunkArray,
   telegramId,
-  languages,
   telegramName,
   savedUser,
   redisClient,
@@ -918,22 +912,28 @@ const registerInBot = async (
 
           console.log({ photos });
 
-          await ctx.replyWithPhoto(
-            {
-              source: fs.createReadStream(photos[0]),
-            },
-            {
-              caption: `${fullName}, ${age}, ${state} ${
-                bio ? "\n" + bio : ""
-              } `,
-              reply_markup: {
-                keyboard: [[{ text: "❤️" }, { text: "👉🏻" }]],
-                resize_keyboard: true,
-                one_time_keyboard: false,
-                is_persistent: true,
+          try {
+            await ctx.replyWithPhoto(
+              {
+                source: fs.createReadStream(photos[0]),
               },
-            },
-          );
+              {
+                caption: `${fullName}, ${age}, ${state} ${
+                  bio ? "\n" + bio : ""
+                } `,
+              },
+            );
+          } catch (error) {
+            try {
+              await ctx.reply(
+                `${fullName}, ${age}, ${state} ${
+                  bio ? "\n" + bio : ""
+                } `,
+              );
+            } catch (error) {
+              console.log(error);
+            }
+          }
 
           // await ctx.replyWithMediaGroup(
           //   photos.map((photo, index) => ({
@@ -993,22 +993,28 @@ const registerInBot = async (
         const state = savedUser.state;
         const bio = savedUser.moreInformation.bio;
 
-        await ctx.replyWithPhoto(
-          {
-            source: fs.createReadStream(photos[0]),
-          },
-          {
-            caption: `${fullName}, ${age}, ${state} ${
-              bio ? "\n" + bio : ""
-            } `,
-            reply_markup: {
-              keyboard: [[{ text: "❤️" }, { text: "👉🏻" }]],
-              resize_keyboard: true,
-              one_time_keyboard: false,
-              is_persistent: true,
+        try {
+          await ctx.replyWithPhoto(
+            {
+              source: fs.createReadStream(photos[0]),
             },
-          },
-        );
+            {
+              caption: `${fullName}, ${age}, ${state} ${
+                bio ? "\n" + bio : ""
+              } `,
+            },
+          );
+        } catch (error) {
+          try {
+            await ctx.reply(
+              `${fullName}, ${age}, ${state} ${
+                bio ? "\n" + bio : ""
+              } `,
+            );
+          } catch (error) {
+            console.log(error);
+          }
+        }
 
         // await ctx.replyWithMediaGroup(
         //   photos.map((photo, index) => ({
@@ -1072,11 +1078,9 @@ const registerInBot = async (
   }
   if (step === "isCorrectProfile") {
     if (ctx?.message?.text === "بله") {
-      const language = savedUser.language;
       const age = savedUser.age;
       const gender = savedUser.gender;
       const lookingFor = savedUser.lookingFor;
-      const country = savedUser.country;
       const state = savedUser.state;
       const name = savedUser.fullName;
       const bio = savedUser.moreInformation.bio;
@@ -1119,26 +1123,16 @@ const registerInBot = async (
         console.log({ usersArrayFromRedis });
       }
 
-      if (
-        language &&
-        age &&
-        gender &&
-        lookingFor &&
-        state &&
-        country &&
-        name
-      ) {
+      if (age && gender && lookingFor && state && name) {
         try {
           // save in redis
           await redisClient.hmset(`user:${savedUser.telegramId}`, {
             lastUpdate: Date.now(),
             lastSeen: Date.now(),
             createAt: Date.now(),
-            language,
             age: age.toString(),
             gender,
             lookingFor,
-            country,
             state,
             fullName: name,
             bio,
@@ -1210,32 +1204,33 @@ const registerInBot = async (
                 },
               });
 
-              const {
-                fullName,
-                age,
-                state,
-                bio,
-                profileImages,
-              } = forYouList.get(telegramId)[0];
+              const { fullName, age, state, bio, profileImages } =
+                forYouList.get(telegramId)[0];
 
               const photos = profileImages;
 
-              await ctx.replyWithPhoto(
-                {
-                  source: fs.createReadStream(photos[0]),
-                },
-                {
-                  caption: `${fullName}, ${age}, ${state} ${
-                    bio ? "\n" + bio : ""
-                  } `,
-                  reply_markup: {
-                    keyboard: [[{ text: "❤️" }, { text: "👉🏻" }]],
-                    resize_keyboard: true,
-                    one_time_keyboard: false,
-                    is_persistent: true,
+              try {
+                await ctx.replyWithPhoto(
+                  {
+                    source: fs.createReadStream(photos[0]),
                   },
-                },
-              );
+                  {
+                    caption: `${fullName}, ${age}, ${state} ${
+                      bio ? "\n" + bio : ""
+                    } `,
+                  },
+                );
+              } catch (error) {
+                try {
+                  await ctx.reply(
+                    `${fullName}, ${age}, ${state} ${
+                      bio ? "\n" + bio : ""
+                    } `,
+                  );
+                } catch (error) {
+                  console.log(error);
+                }
+              }
 
               // const photos = existingUser.profileImages || [];
               // await ctx.replyWithMediaGroup(
@@ -1268,13 +1263,8 @@ const registerInBot = async (
 
               setTimeout(async () => {
                 try {
-                  const {
-                    fullName,
-                    age,
-                    state,
-                    bio,
-                    profileImages,
-                  } = forYouList.get(telegramId)[0];
+                  const { fullName, age, state, bio, profileImages } =
+                    forYouList.get(telegramId)[0];
 
                   await ctx.reply("🔎", {
                     reply_markup: {
@@ -1293,22 +1283,28 @@ const registerInBot = async (
                   });
                   const photos = profileImages;
 
-                  await ctx.replyWithPhoto(
-                    {
-                      source: fs.createReadStream(photos[0]),
-                    },
-                    {
-                      caption: `${fullName}, ${age}, ${state} ${
-                        bio ? "\n" + bio : ""
-                      } `,
-                      reply_markup: {
-                        keyboard: [[{ text: "❤️" }, { text: "👉🏻" }]],
-                        resize_keyboard: true,
-                        one_time_keyboard: false,
-                        is_persistent: true,
+                  try {
+                    await ctx.replyWithPhoto(
+                      {
+                        source: fs.createReadStream(photos[0]),
                       },
-                    },
-                  );
+                      {
+                        caption: `${fullName}, ${age}, ${state} ${
+                          bio ? "\n" + bio : ""
+                        } `,
+                      },
+                    );
+                  } catch (error) {
+                    try {
+                      await ctx.reply(
+                        `${fullName}, ${age}, ${state} ${
+                          bio ? "\n" + bio : ""
+                        } `,
+                      );
+                    } catch (error) {
+                      console.log(error);
+                    }
+                  }
 
                   // const photos = existingUser.profileImages || [];
                   // await ctx.replyWithMediaGroup(
@@ -1381,22 +1377,28 @@ const registerInBot = async (
       const bio = savedUser.moreInformation.bio;
 
       try {
-        await ctx.replyWithPhoto(
-          {
-            source: fs.createReadStream(photos[0]),
-          },
-          {
-            caption: `${fullName}, ${age}, ${state} ${
-              bio ? "\n" + bio : ""
-            } `,
-            reply_markup: {
-              keyboard: [[{ text: "❤️" }, { text: "👉🏻" }]],
-              resize_keyboard: true,
-              one_time_keyboard: false,
-              is_persistent: true,
+        try {
+          await ctx.replyWithPhoto(
+            {
+              source: fs.createReadStream(photos[0]),
             },
-          },
-        );
+            {
+              caption: `${fullName}, ${age}, ${state} ${
+                bio ? "\n" + bio : ""
+              } `,
+            },
+          );
+        } catch (error) {
+          try {
+            await ctx.reply(
+              `${fullName}, ${age}, ${state} ${
+                bio ? "\n" + bio : ""
+              } `,
+            );
+          } catch (error) {
+            console.log(error);
+          }
+        }
 
         // await ctx.replyWithMediaGroup(
         //   photos.map((photo, index) => ({

@@ -18,22 +18,19 @@ message Liker {
   int32 age = 5;
   string gender = 6;
   string lookingFor = 7;
-  string country = 8;
-  string state = 9;
-  string flag = 10;
-  string language = 11;
-  int64 lastSeen = 12;
-  int64 lastUpdate = 13;
-  bool sleep = 14;
-  string education = 15;
-  string dietaryPreference = 16;
-  string job = 17;
-  string workout = 18;
-  string sleepingHabits = 19;
-  string pets = 20;
-  string bio = 21;
-  repeated string profileImages = 22;
-  string inviteCode = 23;
+  string state = 8;
+  int64 lastSeen = 9;
+  int64 lastUpdate = 10;
+  bool sleep = 11;
+  string education = 12;
+  string dietaryPreference = 13;
+  string job = 14;
+  string workout = 15;
+  string sleepingHabits = 16;
+  string pets = 17;
+  string bio = 18;
+  repeated string profileImages = 19;
+  string inviteCode = 20;
   
 }
 
