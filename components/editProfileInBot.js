@@ -6,6 +6,7 @@ const { uploadImageFromUrl } = require("./uploadImageFromUrl");
 const badWords = require("../data/words");
 const protobuf = require("protobufjs");
 const usersMap = require("../utils/usersMap");
+const { getPic } = require("../utils/getPic");
 
 const states = [
   { local: "آذربایجان شرقی", english: "East Azerbaijan" },
@@ -84,19 +85,25 @@ const editProfileInBot = async (
         user: savedUser,
       });
       try {
-        ctx.reply("خطا ، لطفا یکی از اعداد زیر را انتخاب کنید", {
-          reply_markup: {
-            keyboard: [...chunkArray(ages, 4)],
-            resize_keyboard: true,
-            one_time_keyboard: false,
-            is_persistent: true,
+        await ctx.reply(
+          "خطا ، لطفا یکی از اعداد زیر را انتخاب کنید",
+          {
+            reply_markup: {
+              keyboard: [...chunkArray(ages, 4)],
+              resize_keyboard: true,
+              one_time_keyboard: false,
+              is_persistent: true,
+            },
           },
-        });
-      } catch (error) {
-        ctx.reply(
-          "مشکلی پیش آمده است لطفا به پشتیبانی اطلاع دهید (آیدی پشتیبانی در بیو)" +
-            "r8",
         );
+      } catch (error) {
+        try {
+          await ctx.reply(
+            "مشکلی پیش آمده است لطفا به پشتیبانی اطلاع دهید (آیدی پشتیبانی در بیو)" +
+              "r8",
+          );
+          console.log(error);
+        } catch (e) {}
       }
     } else {
       savedUser.editProfileStep = "gender";
@@ -140,7 +147,7 @@ const editProfileInBot = async (
       // });
 
       try {
-        ctx.reply("جنسیت خود را انتخاب کنید", {
+        await ctx.reply("جنسیت خود را انتخاب کنید", {
           reply_markup: {
             keyboard: [
               [
@@ -163,10 +170,12 @@ const editProfileInBot = async (
           },
         });
       } catch (error) {
-        ctx.reply(
-          "مشکلی پیش آمده است لطفا به پشتیبانی اطلاع دهید (آیدی پشتیبانی در بیو)" +
-            "r9",
-        );
+        try {
+          await ctx.reply(
+            "مشکلی پیش آمده است لطفا به پشتیبانی اطلاع دهید (آیدی پشتیبانی در بیو)" +
+              "r9",
+          );
+        } catch (e) {}
       }
     }
   }
@@ -191,7 +200,7 @@ const editProfileInBot = async (
       });
 
       try {
-        ctx.reply("به دنبال چه کسی می گردید ؟", {
+        await ctx.reply("به دنبال چه کسی می گردید ؟", {
           reply_markup: {
             keyboard: [
               [
@@ -207,10 +216,12 @@ const editProfileInBot = async (
           },
         });
       } catch (error) {
-        ctx.reply(
-          "مشکلی پیش آمده است لطفا به پشتیبانی اطلاع دهید (آیدی پشتیبانی در بیو)" +
-            "r10",
-        );
+        try {
+          await ctx.reply(
+            "مشکلی پیش آمده است لطفا به پشتیبانی اطلاع دهید (آیدی پشتیبانی در بیو)" +
+              "r10",
+          );
+        } catch (e) {}
       }
     } else if (ctx?.message?.text === "مرحله قبلی") {
       savedUser.editProfileStep = "age";
@@ -227,7 +238,7 @@ const editProfileInBot = async (
       });
 
       try {
-        ctx.reply("سن خود را انتخاب کنید", {
+        await ctx.reply("سن خود را انتخاب کنید", {
           reply_markup: {
             keyboard: [...chunkArray(ages, 4)],
             resize_keyboard: true,
@@ -236,40 +247,47 @@ const editProfileInBot = async (
           },
         });
       } catch (error) {
-        ctx.reply(
-          "مشکلی پیش آمده است لطفا به پشتیبانی اطلاع دهید (آیدی پشتیبانی در بیو)" +
-            "r11",
-        );
+        try {
+          await ctx.reply(
+            "مشکلی پیش آمده است لطفا به پشتیبانی اطلاع دهید (آیدی پشتیبانی در بیو)" +
+              "r11",
+          );
+        } catch (e) {}
       }
     } else {
       try {
-        ctx.reply("خطا ، لطفا یکی از گزینه های زیر را انتخاب کنید", {
-          reply_markup: {
-            keyboard: [
-              [
-                {
-                  text: "خانم",
-                },
-                {
-                  text: "آقا",
-                },
+        await ctx.reply(
+          "خطا ، لطفا یکی از گزینه های زیر را انتخاب کنید",
+          {
+            reply_markup: {
+              keyboard: [
+                [
+                  {
+                    text: "خانم",
+                  },
+                  {
+                    text: "آقا",
+                  },
+                ],
+                [
+                  {
+                    text: "مرحله قبلی",
+                  },
+                ],
               ],
-              [
-                {
-                  text: "مرحله قبلی",
-                },
-              ],
-            ],
-            resize_keyboard: true,
-            one_time_keyboard: false,
-            is_persistent: true,
+              resize_keyboard: true,
+              one_time_keyboard: false,
+              is_persistent: true,
+            },
           },
-        });
-      } catch (error) {
-        ctx.reply(
-          "مشکلی پیش آمده است لطفا به پشتیبانی اطلاع دهید (آیدی پشتیبانی در بیو)" +
-            "r12",
         );
+      } catch (error) {
+        try {
+          await ctx.reply(
+            "مشکلی پیش آمده است لطفا به پشتیبانی اطلاع دهید (آیدی پشتیبانی در بیو)" +
+              "r12",
+          );
+        } catch (e) {}
       }
     }
   }
@@ -303,7 +321,7 @@ const editProfileInBot = async (
 
       try {
         const showStates = states.map((item) => item.local);
-        ctx.reply("استان خود را انتخاب کنید", {
+        await ctx.reply("استان خود را انتخاب کنید", {
           reply_markup: {
             keyboard: [
               [{ text: "مرحله قبلی" }],
@@ -315,10 +333,12 @@ const editProfileInBot = async (
           },
         });
       } catch (error) {
-        ctx.reply(
-          "مشکلی پیش آمده است لطفا به پشتیبانی اطلاع دهید (آیدی پشتیبانی در بیو)" +
-            "r13",
-        );
+        try {
+          await ctx.reply(
+            "مشکلی پیش آمده است لطفا به پشتیبانی اطلاع دهید (آیدی پشتیبانی در بیو)" +
+              "r13",
+          );
+        } catch (e) {}
       }
     } else if (ctx?.message?.text === "مرحله قبلی") {
       savedUser.editProfileStep = "gender";
@@ -335,7 +355,7 @@ const editProfileInBot = async (
       });
 
       try {
-        ctx.reply("جنسیت خود را انتخاب کنید", {
+        await ctx.reply("جنسیت خود را انتخاب کنید", {
           reply_markup: {
             keyboard: [
               [
@@ -358,14 +378,16 @@ const editProfileInBot = async (
           },
         });
       } catch (error) {
-        ctx.reply(
-          "مشکلی پیش آمده است لطفا به پشتیبانی اطلاع دهید (آیدی پشتیبانی در بیو)" +
-            "r14",
-        );
+        try {
+          await ctx.reply(
+            "مشکلی پیش آمده است لطفا به پشتیبانی اطلاع دهید (آیدی پشتیبانی در بیو)" +
+              "r14",
+          );
+        } catch (e) {}
       }
     } else {
       try {
-        ctx.reply("به دنبال چه کسی می گردید ؟", {
+        await ctx.reply("به دنبال چه کسی می گردید ؟", {
           reply_markup: {
             keyboard: [
               [
@@ -381,10 +403,12 @@ const editProfileInBot = async (
           },
         });
       } catch (error) {
-        ctx.reply(
-          "مشکلی پیش آمده است لطفا به پشتیبانی اطلاع دهید (آیدی پشتیبانی در بیو)" +
-            "r15",
-        );
+        try {
+          await ctx.reply(
+            "مشکلی پیش آمده است لطفا به پشتیبانی اطلاع دهید (آیدی پشتیبانی در بیو)" +
+              "r15",
+          );
+        } catch (e) {}
       }
     }
   }
@@ -408,7 +432,7 @@ const editProfileInBot = async (
       });
 
       try {
-        ctx.reply("دنبال چه کسی میگردید ؟", {
+        await ctx.reply("دنبال چه کسی میگردید ؟", {
           reply_markup: {
             keyboard: [
               [
@@ -424,10 +448,12 @@ const editProfileInBot = async (
           },
         });
       } catch (error) {
-        ctx.reply(
-          "مشکلی پیش آمده است لطفا به پشتیبانی اطلاع دهید (آیدی پشتیبانی در بیو)" +
-            "r15",
-        );
+        try {
+          await ctx.reply(
+            "مشکلی پیش آمده است لطفا به پشتیبانی اطلاع دهید (آیدی پشتیبانی در بیو)" +
+              "r15",
+          );
+        } catch (e) {}
       }
     } else if (findState) {
       savedUser.editProfileStep = "name";
@@ -445,7 +471,7 @@ const editProfileInBot = async (
       });
 
       try {
-        ctx.reply("نام خود را وارد کنید", {
+        await ctx.reply("نام خود را وارد کنید", {
           reply_markup: {
             keyboard: [
               [{ text: telegramName || "" }],
@@ -457,15 +483,17 @@ const editProfileInBot = async (
           },
         });
       } catch (error) {
-        ctx.reply(
-          "مشکلی پیش آمده است لطفا به پشتیبانی اطلاع دهید (آیدی پشتیبانی در بیو)" +
-            "r20",
-        );
+        try {
+          await ctx.reply(
+            "مشکلی پیش آمده است لطفا به پشتیبانی اطلاع دهید (آیدی پشتیبانی در بیو)" +
+              "r20",
+          );
+        } catch (e) {}
       }
     } else {
       try {
         const showStates = states.map((item) => item.local);
-        ctx.reply("شهر خود را انتخاب کنید", {
+        await ctx.reply("شهر خود را انتخاب کنید", {
           reply_markup: {
             keyboard: [
               [{ text: "مرحله قبلی" }],
@@ -477,10 +505,12 @@ const editProfileInBot = async (
           },
         });
       } catch (error) {
-        ctx.reply(
-          "مشکلی پیش آمده است لطفا به پشتیبانی اطلاع دهید (آیدی پشتیبانی در بیو)" +
-            "r21",
-        );
+        try {
+          await ctx.reply(
+            "مشکلی پیش آمده است لطفا به پشتیبانی اطلاع دهید (آیدی پشتیبانی در بیو)" +
+              "r21",
+          );
+        } catch (e) {}
       }
     }
   }
@@ -501,7 +531,7 @@ const editProfileInBot = async (
 
       try {
         const showStates = states.map((item) => item.local);
-        ctx.reply("یکی از استان های زیر را انتخاب کنید", {
+        await ctx.reply("یکی از استان های زیر را انتخاب کنید", {
           reply_markup: {
             keyboard: [
               [{ text: "مرحله قبلی" }],
@@ -513,10 +543,12 @@ const editProfileInBot = async (
           },
         });
       } catch (error) {
-        ctx.reply(
-          "مشکلی پیش آمده است لطفا به پشتیبانی اطلاع دهید (آیدی پشتیبانی در بیو)" +
-            "r22",
-        );
+        try {
+          await ctx.reply(
+            "مشکلی پیش آمده است لطفا به پشتیبانی اطلاع دهید (آیدی پشتیبانی در بیو)" +
+              "r22",
+          );
+        } catch (e) {}
       }
     } else if (!ctx?.message?.text) {
       savedUser.editProfileStep = "name";
@@ -533,7 +565,7 @@ const editProfileInBot = async (
       });
 
       try {
-        ctx.reply("نام خود را وارد کنید", {
+        await ctx.reply("نام خود را وارد کنید", {
           reply_markup: {
             keyboard: [
               [{ text: telegramName }],
@@ -545,10 +577,12 @@ const editProfileInBot = async (
           },
         });
       } catch (error) {
-        ctx.reply(
-          "مشکلی پیش آمده است لطفا به پشتیبانی اطلاع دهید (آیدی پشتیبانی در بیو)" +
-            "r23",
-        );
+        try {
+          await ctx.reply(
+            "مشکلی پیش آمده است لطفا به پشتیبانی اطلاع دهید (آیدی پشتیبانی در بیو)" +
+              "r23",
+          );
+        } catch (e) {}
       }
     } else {
       const isBadWord = badWords.some((word) =>
@@ -557,7 +591,9 @@ const editProfileInBot = async (
           .includes(word.toLowerCase()),
       );
       if (isBadWord) {
-        ctx.reply("حاوی کلمات نامناسب");
+        try {
+          ctx.reply("حاوی کلمات نامناسب");
+        } catch (e) {}
         return;
       }
       // save name
@@ -576,7 +612,7 @@ const editProfileInBot = async (
       });
 
       try {
-        ctx.reply(
+        await ctx.reply(
           `درباره خودت بیشتر بگو. دنبال چه کسی می‌گردی؟ می‌خوای چیکار کنی؟ من بهترین مچ‌ها رو پیدا می‌کنم برات.`,
           {
             reply_markup: {
@@ -597,10 +633,12 @@ const editProfileInBot = async (
           },
         );
       } catch (error) {
-        ctx.reply(
-          "مشکلی پیش آمده است لطفا به پشتیبانی اطلاع دهید (آیدی پشتیبانی در بیو)" +
-            "r24",
-        );
+        try {
+          await ctx.reply(
+            "مشکلی پیش آمده است لطفا به پشتیبانی اطلاع دهید (آیدی پشتیبانی در بیو)" +
+              "r24",
+          );
+        } catch (e) {}
       }
     }
   }
@@ -620,7 +658,7 @@ const editProfileInBot = async (
       });
 
       try {
-        ctx.reply("نام خود را وارد کنید", {
+        await ctx.reply("نام خود را وارد کنید", {
           reply_markup: {
             keyboard: [
               [{ text: savedUser.fullName || "-" }],
@@ -632,14 +670,16 @@ const editProfileInBot = async (
           },
         });
       } catch (error) {
-        ctx.reply(
-          "مشکلی پیش آمده است لطفا به پشتیبانی اطلاع دهید (آیدی پشتیبانی در بیو)" +
-            "r25",
-        );
+        try {
+          await ctx.reply(
+            "مشکلی پیش آمده است لطفا به پشتیبانی اطلاع دهید (آیدی پشتیبانی در بیو)" +
+              "r25",
+          );
+        } catch (e) {}
       }
     } else if (!ctx?.message?.text || ctx?.message?.text.length < 5) {
       try {
-        ctx.reply(
+        await ctx.reply(
           `درباره خودت بیشتر بگو. دنبال چه کسی می‌گردی؟ می‌خوای چیکار کنی؟ من بهترین مچ‌ها رو پیدا می‌کنم برات.`,
           {
             reply_markup: {
@@ -651,10 +691,12 @@ const editProfileInBot = async (
           },
         );
       } catch (error) {
-        ctx.reply(
-          "مشکلی پیش آمده است لطفا به پشتیبانی اطلاع دهید (آیدی پشتیبانی در بیو)" +
-            "r26",
-        );
+        try {
+          await ctx.reply(
+            "مشکلی پیش آمده است لطفا به پشتیبانی اطلاع دهید (آیدی پشتیبانی در بیو)" +
+              "r26",
+          );
+        } catch (e) {}
       }
     } else {
       const isBadWord = badWords.some((word) =>
@@ -663,12 +705,16 @@ const editProfileInBot = async (
           .includes(word.toLowerCase()),
       );
       if (isBadWord) {
-        ctx.reply("حاوی کلمات نامناسب");
+        try {
+          await ctx.reply("حاوی کلمات نامناسب");
+        } catch (e) {}
         return;
       }
       // save bio
 
-      ctx.reply("⌛️");
+      try {
+        await ctx.reply("⌛️");
+      } catch (e) {}
 
       savedUser.moreInformation.bio =
         ctx?.message?.text !== "رد شدن" ? ctx?.message?.text : "";
@@ -696,9 +742,12 @@ const editProfileInBot = async (
         const bio = savedUser.moreInformation.bio;
 
         try {
+          // const buffer = await getPic(photos[0]);
           await ctx.replyWithPhoto(
             {
-              source: fs.createReadStream(photos[0]),
+              source:
+                fs.existsSync(photos[0]) &&
+                fs.createReadStream(photos[0]),
             },
             {
               caption: `${fullName}, ${age}, ${state} ${
@@ -730,7 +779,8 @@ const editProfileInBot = async (
         //         : undefined,
         //   })),
         // );
-        ctx.reply("درسته ؟", {
+
+        await ctx.reply("درسته ؟", {
           reply_markup: {
             keyboard: [
               [{ text: "بله" }, { text: "ویرایش پروفایلم" }],
@@ -741,10 +791,12 @@ const editProfileInBot = async (
           },
         });
       } catch (error) {
-        ctx.reply(
-          "مشکلی پیش آمده است لطفا به پشتیبانی اطلاع دهید (آیدی پشتیبانی در بیو)" +
-            "r31",
-        );
+        try {
+          await ctx.reply(
+            "مشکلی پیش آمده است لطفا به پشتیبانی اطلاع دهید (آیدی پشتیبانی در بیو)" +
+              "r31",
+          );
+        } catch (e) {}
         console.error(error);
       }
     }
@@ -848,10 +900,10 @@ const editProfileInBot = async (
                 reply_markup: {
                   keyboard: [
                     [
-                      { text: "💌" },
-                      { text: "❌" },
-                      { text: "❤️" },
                       { text: "☰" },
+                      { text: "❤️" },
+                      { text: "❌" },
+                      { text: "💌" },
                     ],
                   ],
                   resize_keyboard: true,
@@ -872,9 +924,12 @@ const editProfileInBot = async (
               const photos = profileImages;
 
               try {
+                // const buffer = await getPic(photos[0]);
                 await ctx.replyWithPhoto(
                   {
-                    source: fs.createReadStream(photos[0]),
+                    source:
+                      fs.existsSync(photos[0]) &&
+                      fs.createReadStream(photos[0]),
                   },
                   {
                     caption: `${fullName}, ${age}, ${state} ${
@@ -915,21 +970,23 @@ const editProfileInBot = async (
                 user: savedUser,
               });
 
-              await ctx.reply("🔎", {
-                reply_markup: {
-                  keyboard: [
-                    [
-                      { text: "💌" },
-                      { text: "❌" },
-                      { text: "❤️" },
-                      { text: "☰" },
+              try {
+                await ctx.reply("🔎", {
+                  reply_markup: {
+                    keyboard: [
+                      [
+                        { text: "☰" },
+                        { text: "❤️" },
+                        { text: "❌" },
+                        { text: "💌" },
+                      ],
                     ],
-                  ],
-                  resize_keyboard: true,
-                  one_time_keyboard: false,
-                  is_persistent: true,
-                },
-              });
+                    resize_keyboard: true,
+                    one_time_keyboard: false,
+                    is_persistent: true,
+                  },
+                });
+              } catch (e) {}
 
               setTimeout(async () => {
                 try {
@@ -939,9 +996,12 @@ const editProfileInBot = async (
                   const photos = profileImages;
 
                   try {
+                    // const buffer = await getPic(photos[0]);
                     await ctx.replyWithPhoto(
                       {
-                        source: fs.createReadStream(photos[0]),
+                        source:
+                          fs.existsSync(photos[0]) &&
+                          fs.createReadStream(photos[0]),
                       },
                       {
                         caption: `${fullName}, ${age}, ${state} ${
@@ -997,22 +1057,26 @@ const editProfileInBot = async (
           //   },
           // });
 
-          // ctx.replyWithPhoto(
+          // await ctx.replyWithPhoto(
           //   "https://pouns-storage.storage.c2.liara.space/1758644004701-4a0b00d2-f844-4e63-9923-2e3ba0de688c.jpg",
           //   {
           //     caption: "Abolfazl, 25, 🇮🇷 Tehran\njust a programmer",
           //   },
           // );
         } catch (error) {
-          ctx.reply(
-            "مشکلی پیش آمده است لطفا به پشتیبانی اطلاع دهید (آیدی پشتیبانی در بیو)" +
-              "r34",
-          );
+          try {
+            await ctx.reply(
+              "مشکلی پیش آمده است لطفا به پشتیبانی اطلاع دهید (آیدی پشتیبانی در بیو)" +
+                "r34",
+            );
+          } catch (e) {}
         }
       } else {
-        ctx.reply(
-          "مشکلی پیش آمده است لطفا به پشتیبانی اطلاع دهید (آیدی پشتیبانی در بیو)",
-        );
+        try {
+          await ctx.reply(
+            "مشکلی پیش آمده است لطفا به پشتیبانی اطلاع دهید (آیدی پشتیبانی در بیو)",
+          );
+        } catch (e) {}
       }
     } else if (ctx?.message?.text === "ویرایش پروفایلم") {
       await User.updateOne(
@@ -1033,19 +1097,23 @@ const editProfileInBot = async (
         user: savedUser,
       });
 
-      ctx.reply(
-        `1. ${"مشاهده پروفایل ها"} \n2. ${"ویرایش پروفایلم"} \n3. ${"تغییر عکس من"}`,
-        {
-          reply_markup: {
-            keyboard: [
-              [{ text: "1🚀" }, { text: "2" }, { text: "3" }],
-            ],
-            resize_keyboard: true,
-            one_time_keyboard: false,
-            is_persistent: true,
+      try {
+        await ctx.reply(
+          `1. ${"مشاهده پروفایل ها"} \n2. ${"ویرایش پروفایلم"} \n3. ${"تغییر عکس من"}`,
+          {
+            reply_markup: {
+              keyboard: [
+                [{ text: "1🚀" }, { text: "2" }, { text: "3" }],
+              ],
+              resize_keyboard: true,
+              one_time_keyboard: false,
+              is_persistent: true,
+            },
           },
-        },
-      );
+        );
+      } catch (error) {
+        console.log(error);
+      }
     } else {
       const photos = savedUser.profileImages || [];
       const fullName = savedUser.fullName;
@@ -1056,9 +1124,12 @@ const editProfileInBot = async (
 
       try {
         try {
+          // const buffer = await getPic(photos[0]);
           await ctx.replyWithPhoto(
             {
-              source: fs.createReadStream(photos[0]),
+              source:
+                fs.existsSync(photos[0]) &&
+                fs.createReadStream(photos[0]),
             },
             {
               caption: `${fullName}, ${age}, ${state} ${
@@ -1090,7 +1161,7 @@ const editProfileInBot = async (
         //         : undefined,
         //   })),
         // );
-        ctx.reply("درسته ؟", {
+        await ctx.reply("درسته ؟", {
           reply_markup: {
             keyboard: [
               [{ text: "بله" }, { text: "ویرایش پروفایلم" }],
@@ -1101,10 +1172,12 @@ const editProfileInBot = async (
           },
         });
       } catch (error) {
-        ctx.reply(
-          "مشکلی پیش آمده است لطفا به پشتیبانی اطلاع دهید (آیدی پشتیبانی در بیو)" +
-            "r35",
-        );
+        try {
+          await ctx.reply(
+            "مشکلی پیش آمده است لطفا به پشتیبانی اطلاع دهید (آیدی پشتیبانی در بیو)" +
+              "r35",
+          );
+        } catch (e) {}
         console.log({ error });
       }
 

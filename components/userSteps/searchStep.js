@@ -14,14 +14,13 @@ const searchStep = async (
   // Handle like actions (❤️, 💌)
   if (
     ctx?.message?.text === "❤️" ||
-    // ctx?.message?.text === "❌" ||
+    ctx?.message?.text === "❌" ||
     ctx?.message?.text === "💌"
   ) {
     if (
       existingUser.firstLikeTime + 86400000 > Date.now() &&
       existingUser.likeCount > 50
     ) {
-      console.log("step 1");
       if (existingUser.giftLikeCount > 0) {
         existingUser.giftLikeCount -= 1;
         usersMap.set(telegramId, {
@@ -29,22 +28,26 @@ const searchStep = async (
           user: existingUser,
         });
       } else {
-        await ctx.reply(
-          "⚠️  شما فقط تعداد محدودی لایک در روز می‌توانید داشته باشید. برای لایک بیشتر دوستان خود را دعوت کنید و 100 لایک هدیه بگیرید.",
-        );
-        const inviteLink = `https://ble.ir/pounes_dating_bot?start=${generateInviteCode(
-          +telegramId,
-        )}`;
-        const shareText =
-          "ربات دوستیابی پونس 🔥 در بله است! یک دوست جدید یا حتی یک عاشق پیدا کنید 👫" +
-          "\n👉🏻 " +
-          inviteLink;
+        try {
+          await ctx.reply(
+            "⚠️  شما فقط تعداد محدودی لایک در روز می‌توانید داشته باشید. برای لایک بیشتر دوستان خود را دعوت کنید و 100 لایک هدیه بگیرید.",
+          );
+          const inviteLink = `https://ble.ir/pounes_dating_bot?start=${generateInviteCode(
+            +telegramId,
+          )}`;
+          const shareText =
+            "ربات دوستیابی پونس 🔥 در بله است! یک دوست جدید یا حتی یک عاشق پیدا کنید 👫" +
+            "\n👉🏻 " +
+            inviteLink;
 
-        ctx.reply(shareText);
+          await ctx.reply(shareText);
+        } catch (error) {
+          console.log(error);
+        }
+
         return;
       }
     } else if (existingUser.firstLikeTime + 86400000 < Date.now()) {
-      console.log("step 2");
       existingUser.firstLikeTime = Date.now();
       existingUser.likeCount = 1;
       usersMap.set(telegramId, {
@@ -52,7 +55,6 @@ const searchStep = async (
         user: existingUser,
       });
     } else {
-      console.log("step 3");
       existingUser.firstLikeTime = Date.now();
       existingUser.likeCount = (existingUser.likeCount || 0) + 1;
       usersMap.set(telegramId, {

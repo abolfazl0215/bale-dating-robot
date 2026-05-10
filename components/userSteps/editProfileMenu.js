@@ -1,5 +1,6 @@
 const chunkArray = require("../../utils/chunkArray.js");
 const fs = require("fs");
+const { getPic } = require("../../utils/getPic.js");
 
 const editProfileMenu = async (
   ctx,
@@ -29,10 +30,10 @@ const editProfileMenu = async (
           reply_markup: {
             keyboard: [
               [
-                { text: "💌" },
-                { text: "❌" },
-                { text: "❤️" },
                 { text: "☰" },
+                { text: "❤️" },
+                { text: "❌" },
+                { text: "💌" },
               ],
             ],
             resize_keyboard: true,
@@ -62,9 +63,12 @@ const editProfileMenu = async (
         // const photos = existingUser.profileImages | [];
 
         try {
+          // const buffer = await getPic(photos[0]);
           await ctx.replyWithPhoto(
             {
-              source: fs.createReadStream(photos[0]),
+              source:
+                fs.existsSync(photos[0]) &&
+                fs.createReadStream(photos[0]),
             },
             {
               caption: `${fullName}, ${age}, ${state} ${
@@ -106,21 +110,25 @@ const editProfileMenu = async (
           user: existingUser,
         });
 
-        await ctx.reply("🔎", {
-          reply_markup: {
-            keyboard: [
-              [
-                { text: "💌" },
-                { text: "❌" },
-                { text: "❤️" },
-                { text: "☰" },
+        try {
+          await ctx.reply("🔎", {
+            reply_markup: {
+              keyboard: [
+                [
+                  { text: "☰" },
+                  { text: "❤️" },
+                  { text: "❌" },
+                  { text: "💌" },
+                ],
               ],
-            ],
-            resize_keyboard: true,
-            one_time_keyboard: false,
-            is_persistent: true,
-          },
-        });
+              resize_keyboard: true,
+              one_time_keyboard: false,
+              is_persistent: true,
+            },
+          });
+        } catch (error) {
+          console.log(error);
+        }
 
         // setTimeout(async () => {
         try {
@@ -138,9 +146,12 @@ const editProfileMenu = async (
           // const photos = existingUser.profileImages || [];
 
           try {
+            // const buffer = await getPic(photos[0]);
             await ctx.replyWithPhoto(
               {
-                source: fs.createReadStream(photos[0]),
+                source:
+                  fs.existsSync(photos[0]) &&
+                  fs.createReadStream(photos[0]),
               },
               {
                 caption: `${fullName}, ${age}, ${state} ${
@@ -199,7 +210,7 @@ const editProfileMenu = async (
     });
 
     try {
-      ctx.reply("سن خود را انتخاب کنید", {
+      await ctx.reply("سن خود را انتخاب کنید", {
         reply_markup: {
           keyboard: [...chunkArray(ages, 4)],
           resize_keyboard: true,
@@ -209,7 +220,7 @@ const editProfileMenu = async (
       });
     } catch (error) {
       try {
-        ctx.reply(
+        await ctx.reply(
           "مشکلی پیش آمده است لطفا به پشتیبانی اطلاع دهید (آیدی پشتیبانی در بیو)" +
             "r8",
         );
@@ -227,7 +238,7 @@ const editProfileMenu = async (
     });
 
     try {
-      ctx.reply("عکس خود را ارسال کنید 🖼️", {
+      await ctx.reply("عکس خود را ارسال کنید 🖼️", {
         reply_markup: {
           keyboard: [
             [
@@ -243,7 +254,7 @@ const editProfileMenu = async (
       });
     } catch (error) {
       try {
-        ctx.reply(
+        await ctx.reply(
           "مشکلی پیش آمده است لطفا به پشتیبانی اطلاع دهید (آیدی پشتیبانی در بیو)" +
             "r27",
         );
@@ -253,7 +264,7 @@ const editProfileMenu = async (
     }
   } else {
     try {
-      ctx.reply(
+      await ctx.reply(
         `1. ${"مشاهده پروفایل ها"} \n2. ${"ویرایش پروفایلم"} \n3. ${"تغییر عکس من"}`,
         {
           reply_markup: {

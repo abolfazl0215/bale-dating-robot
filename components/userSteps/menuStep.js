@@ -1,5 +1,6 @@
 const fs = require("fs");
 const User = require("../../models/User");
+const { getPic } = require("../../utils/getPic");
 
 const menuStep = async (
   ctx,
@@ -29,10 +30,10 @@ const menuStep = async (
           reply_markup: {
             keyboard: [
               [
-                { text: "💌" },
-                { text: "❌" },
-                { text: "❤️" },
                 { text: "☰" },
+                { text: "❤️" },
+                { text: "❌" },
+                { text: "💌" },
               ],
             ],
             resize_keyboard: true,
@@ -53,9 +54,12 @@ const menuStep = async (
         const photos = profileImages;
 
         try {
+          // const buffer = await getPic(photos[0]);
           await ctx.replyWithPhoto(
             {
-              source: fs.createReadStream(photos[0]),
+              source:
+                fs.existsSync(photos[0]) &&
+                fs.createReadStream(photos[0]),
             },
             {
               caption: `${fullName}, ${age}, ${state} ${
@@ -104,10 +108,10 @@ const menuStep = async (
             reply_markup: {
               keyboard: [
                 [
-                  { text: "💌" },
-                  { text: "❌" },
-                  { text: "❤️" },
                   { text: "☰" },
+                  { text: "❤️" },
+                  { text: "❌" },
+                  { text: "💌" },
                 ],
               ],
               resize_keyboard: true,
@@ -115,12 +119,15 @@ const menuStep = async (
             },
           });
           const photos = profileImages;
-          console.log({ photos2: photos });
+          // console.log({ photos2: photos });
 
           try {
+            // const buffer = await getPic(photos[0]);
             await ctx.replyWithPhoto(
               {
-                source: fs.createReadStream(photos[0]),
+                source:
+                  fs.existsSync(photos[0]) &&
+                  fs.createReadStream(photos[0]),
               },
               {
                 caption: `${fullName}, ${age}, ${state} ${
@@ -163,17 +170,20 @@ const menuStep = async (
       const bio = existingUser.moreInformation.bio;
       const inviteCode = existingUser.inviteCode;
 
-      console.log({ photos3: photos });
+      // console.log({ photos3: photos });
 
       try {
+        // const buffer = await getPic(photos[0]);
         await ctx.replyWithPhoto(
           {
-            source: fs.createReadStream(photos[0]),
+            source:
+              fs.existsSync(photos[0]) &&
+              fs.createReadStream(photos[0]),
           },
           {
             caption: `${fullName}, ${age}, ${state} ${
               bio ? "\n" + bio : ""
-            } \n/user_${inviteCode_from_forYouList || "not_found"}`,
+            } \n/user_${inviteCode || "not_found"}`,
           },
         );
       } catch (error) {
@@ -181,7 +191,7 @@ const menuStep = async (
           await ctx.reply(
             `${fullName}, ${age}, ${state} ${
               bio ? "\n" + bio : ""
-            } \n/user_${inviteCode_from_forYouList || "not_found"}`,
+            } \n/user_${inviteCode || "not_found"}`,
           );
         } catch (error) {
           console.log(error);
@@ -200,7 +210,7 @@ const menuStep = async (
         user: existingUser,
       });
 
-      ctx.reply(
+      await ctx.reply(
         `1. ${"مشاهده پروفایل ها"} \n2. ${"ویرایش پروفایلم"} \n3. ${"تغییر عکس من"}`,
         {
           reply_markup: {
@@ -225,7 +235,7 @@ const menuStep = async (
         user: existingUser,
       });
 
-      ctx.reply(
+      await ctx.reply(
         `${"حالت خواب"}: ${
           existingUser.sleep ? "فعال" : "غیرفعال"
         }\n\n${"اگر حالت خواب فعال باشد ، لایکی دریافت نمیکنید"}`,
@@ -249,33 +259,37 @@ const menuStep = async (
       console.log(error);
     }
   } else if (ctx?.message?.text === "4") {
-    existingUser.userStep = "invite";
-    usersMap.set(telegramId, {
-      time: Date.now(),
-      user: existingUser,
-    });
-    await ctx.reply(
-      "دوستان خود را دعوت کنید تا لایک های بیشتری دریافت کنید!\n\nبا دوستان خود یا در شبکه های اجتماعی خود به اشتراک گذاری کنید!\nلینک شخصی شما 👇🏽",
-      {
-        reply_markup: {
-          keyboard: [[{ text: "بازگشت" }]],
-          resize_keyboard: true,
-          one_time_keyboard: false,
-          is_persistent: true,
+    try {
+      existingUser.userStep = "invite";
+      usersMap.set(telegramId, {
+        time: Date.now(),
+        user: existingUser,
+      });
+      await ctx.reply(
+        "دوستان خود را دعوت کنید تا لایک های بیشتری دریافت کنید!\n\nبا دوستان خود یا در شبکه های اجتماعی خود به اشتراک گذاری کنید!\nلینک شخصی شما 👇🏽",
+        {
+          reply_markup: {
+            keyboard: [[{ text: "بازگشت" }]],
+            resize_keyboard: true,
+            one_time_keyboard: false,
+            is_persistent: true,
+          },
         },
-      },
-    );
-    const shareText =
-      "ربات دوستیابی پونس 🔥 در بله است! یک دوست جدید یا حتی یک عاشق پیدا کنید 👫" +
-      "\n👉🏻 " +
-      generateInviteLink(telegramId);
+      );
+      const shareText =
+        "ربات دوستیابی پونس 🔥 در بله است! یک دوست جدید یا حتی یک عاشق پیدا کنید 👫" +
+        "\n👉🏻 " +
+        generateInviteLink(telegramId);
 
-    ctx.reply(shareText);
+      await ctx.reply(shareText);
+    } catch (error) {
+      console.log(error);
+    }
 
     return;
   } else {
     try {
-      ctx.reply(
+      await ctx.reply(
         `1. ${"مشاهده پروفایل ها"}\n2. ${"پروفایل من"}\n3. ${"حالت خواب"}\n----------------------------\n4. ${"دوستان خود را دعوت کنید تا لایک های بیشتری دریافت کنید 😎"}`,
         {
           reply_markup: {

@@ -19,6 +19,7 @@
     "cloudinary": "^2.10.0",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
+    "express": "^5.2.1",
     "ioredis": "^5.10.1",
     "mongoose": "^9.6.1",
     "node-telegram-bot-api": "^0.67.0",

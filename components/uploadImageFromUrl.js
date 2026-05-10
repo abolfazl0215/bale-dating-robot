@@ -26,12 +26,28 @@ const uploadImageFromUrl = async (imageUrl, options = {}) => {
   const config = { ...defaultOptions, ...options };
 
   try {
+    // console.log({ imageUrl });
     // ۲. دانلود تصویر به صورت باینری
     const response = await axios.get(imageUrl, {
       responseType: "arraybuffer",
+      timeout: 20000,
+      headers: {
+        // اگر از نوع Bearer پشتیبانی می‌کند:
+        Authorization: `Bearer 890588018:8B58TpZfCWe5lZw3KPPgWChNgRxrUW0DIbg`,
+        Accept: "application/octet-stream,*/*",
+      },
+      validateStatus: () => true, // برای دیباگ: حتی اگر 404/500 شد، جواب را چاپ کنیم
     });
 
+    // console.log("status:", response.status);
+    // console.log("headers:", response.headers);
+    // console.log(
+    //   "body head:",
+    //   Buffer.from(response.data).slice(0, 200).toString("utf8"),
+    // );
+
     // ۳. پردازش و فشردگی با Sharp
+
     console.time("compress");
     const compressedImageBuffer = await sharp(
       Buffer.from(response.data),
@@ -52,7 +68,7 @@ const uploadImageFromUrl = async (imageUrl, options = {}) => {
 
     // ۴. ذخیره فایل در سیستم با استفاده از fs
     fs.writeFileSync(filePath, compressedImageBuffer);
-    console.log(`File saved to: ${filePath}`);
+    // console.log(`File saved to: ${filePath}`);
 
     // ۵. بازگرداندن لینک مستقیم (فرض بر این است که سرور شما روی پورت مثلاً ۳۰۰۰ است)
     // اگر از اکسپرس استفاده می‌کنید، باید پوشه public را استاتیک کنید
@@ -101,9 +117,9 @@ module.exports = {
 //     format: "jpeg", // فرمت خروجی
 //   };
 
-//   const ENDPOINT = "https://minio-cr5iu1.chbk.dev";
-//   const ACCESS_KEY = "JjuKsC58shhxKJcEvsm7UWzaNVwsMKb5";
-//   const SECRET_KEY = "plebQIzTxSRjo4avrVTH0hUeXSLBXYkO";
+//   const ENDPOINT = "https://minio-sug43t.chbk.dev";
+//   const ACCESS_KEY = "B6AJN7fqbMd0h5RCAtEY1dMCwioXxt0O";
+//   const SECRET_KEY = "c8YsXiPVhMRY0ldgSwWX2N6etXhIgzbC";
 //   const BUCKET_NAME = "pounes";
 
 //   const config = { ...defaultOptions, ...options };
@@ -160,6 +176,7 @@ module.exports = {
 //       Body: compressedImageBuffer,
 //       Bucket: BUCKET_NAME,
 //       Key: fileName,
+//       ACL: "public-read",
 //     };
 
 //     try {
@@ -168,7 +185,7 @@ module.exports = {
 //       console.log(error);
 //     }
 
-//     return `https://minio-cr5iu1.chbk.dev/pounes/${fileName}`;
+//     return `${fileName}`;
 //   } catch (error) {
 //     console.error("خطا در آپلود تصویر از URL:", error);
 //     throw error;

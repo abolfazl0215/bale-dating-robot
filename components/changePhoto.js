@@ -54,10 +54,10 @@ const changePhoto = async (
               reply_markup: {
                 keyboard: [
                   [
-                    { text: "💌" },
-                    { text: "❌" },
-                    { text: "❤️" },
                     { text: "☰" },
+                    { text: "❤️" },
+                    { text: "❌" },
+                    { text: "💌" },
                   ],
                 ],
                 resize_keyboard: true,
@@ -71,16 +71,31 @@ const changePhoto = async (
 
             const photos = profileImages;
             // const photos = existingUser.profileImages || [];
-            await ctx.replyWithPhoto(
-              {
-                source: fs.createReadStream(photos[0]),
-              },
-              {
-                caption: `${fullName}, ${age}, ${state} ${
-                  bio ? "\n" + bio : ""
-                } `,
-              },
-            );
+            // const buffer = await getPic(photos[0]);
+            try {
+              await ctx.replyWithPhoto(
+                {
+                  source:
+                    fs.existsSync(photos[0]) &&
+                    fs.createReadStream(photos[0]),
+                },
+                {
+                  caption: `${fullName}, ${age}, ${state} ${
+                    bio ? "\n" + bio : ""
+                  } `,
+                },
+              );
+            } catch (e) {
+              try {
+                await ctx.reply(
+                  `${fullName}, ${age}, ${state} ${
+                    bio ? "\n" + bio : ""
+                  } `,
+                );
+              } catch (error) {
+                console.log(error);
+              }
+            }
             // await ctx.replyWithMediaGroup(
             //   photos.map((photo, index) => ({
             //     type: "photo",
@@ -101,20 +116,24 @@ const changePhoto = async (
               user: existingUser,
             });
 
-            await ctx.reply("🔎", {
-              reply_markup: {
-                keyboard: [
-                  [
-                    { text: "💌" },
-                    { text: "❌" },
-                    { text: "❤️" },
-                    { text: "☰" },
+            try {
+              await ctx.reply("🔎", {
+                reply_markup: {
+                  keyboard: [
+                    [
+                      { text: "☰" },
+                      { text: "❤️" },
+                      { text: "❌" },
+                      { text: "💌" },
+                    ],
                   ],
-                ],
-                resize_keyboard: true,
-                is_persistent: true,
-              },
-            });
+                  resize_keyboard: true,
+                  is_persistent: true,
+                },
+              });
+            } catch (error) {
+              console.log(error);
+            }
 
             setTimeout(async () => {
               try {
@@ -128,17 +147,32 @@ const changePhoto = async (
                 } = forYouList.get(telegramId)[0];
 
                 const photos = profileImages;
+                // const buffer = await getPic(photos[0]);
 
-                await ctx.replyWithPhoto(
-                  {
-                    source: fs.createReadStream(photos[0]),
-                  },
-                  {
-                    caption: `${fullName}, ${age}, ${state} ${
-                      bio ? "\n" + bio : ""
-                    } `,
-                  },
-                );
+                try {
+                  await ctx.replyWithPhoto(
+                    {
+                      source:
+                        fs.existsSync(photos[0]) &&
+                        fs.createReadStream(photos[0]),
+                    },
+                    {
+                      caption: `${fullName}, ${age}, ${state} ${
+                        bio ? "\n" + bio : ""
+                      } `,
+                    },
+                  );
+                } catch (e) {
+                  try {
+                    await ctx.reply(
+                      `${fullName}, ${age}, ${state} ${
+                        bio ? "\n" + bio : ""
+                      } `,
+                    );
+                  } catch (error) {
+                    console.log(error);
+                  }
+                }
                 // const photos = existingUser.profileImages || [];
                 // await ctx.replyWithMediaGroup(
                 //   photos.map((photo, index) => ({
@@ -175,17 +209,21 @@ const changePhoto = async (
         //   },
         // });
 
-        // ctx.replyWithPhoto(
+        // await ctx.replyWithPhoto(
         //   "https://pouns-storage.storage.c2.liara.space/1758644004701-4a0b00d2-f844-4e63-9923-2e3ba0de688c.jpg",
         //   {
         //     caption: "Abolfazl, 25, 🇮🇷 Tehran\njust a programmer",
         //   },
         // );
       } catch (error) {
-        ctx.reply(
-          "مشکلی پیش آمده است لطفا به پشتیبانی اطلاع دهید (آیدی پشتیبانی در بیو)" +
-            "r34",
-        );
+        try {
+          await ctx.reply(
+            "مشکلی پیش آمده است لطفا به پشتیبانی اطلاع دهید (آیدی پشتیبانی در بیو)" +
+              "r34",
+          );
+        } catch (error) {
+          console.log(error);
+        }
       }
     } else if (ctx?.message?.text === "ویرایش پروفایلم") {
       try {
@@ -202,7 +240,7 @@ const changePhoto = async (
           user: existingUser,
         });
 
-        ctx.reply(
+        await ctx.reply(
           `1. ${"مشاهده پروفایل ها"} \n2. ${"ویرایش پروفایلم"} \n3. ${"تغییر عکس من"}`,
           {
             reply_markup: {
@@ -228,16 +266,31 @@ const changePhoto = async (
       console.log({ photos2: existingUser.profileImagesEdit });
 
       try {
-        await ctx.replyWithPhoto(
-          {
-            source: fs.createReadStream(photos[0]),
-          },
-          {
-            caption: `${fullName}, ${age}, ${state} ${
-              bio ? "\n" + bio : ""
-            } `,
-          },
-        );
+        // const buffer = await getPic(photos[0]);
+        try {
+          await ctx.replyWithPhoto(
+            {
+              source:
+                fs.existsSync(photos[0]) &&
+                fs.createReadStream(photos[0]),
+            },
+            {
+              caption: `${fullName}, ${age}, ${state} ${
+                bio ? "\n" + bio : ""
+              } `,
+            },
+          );
+        } catch (e) {
+          try {
+            await ctx.reply(
+              `${fullName}, ${age}, ${state} ${
+                bio ? "\n" + bio : ""
+              } `,
+            );
+          } catch (error) {
+            console.log(error);
+          }
+        }
         // await ctx.replyWithMediaGroup(
         //   photos.map((photo, index) => ({
         //     type: "photo",
@@ -250,7 +303,7 @@ const changePhoto = async (
         //         : undefined,
         //   })),
         // );
-        ctx.reply("درسته ؟", {
+        await ctx.reply("درسته ؟", {
           reply_markup: {
             keyboard: [
               [{ text: "بله" }, { text: "ویرایش پروفایلم" }],
@@ -259,11 +312,13 @@ const changePhoto = async (
           },
         });
       } catch (error) {
-        ctx.reply(
-          "مشکلی پیش آمده است لطفا به پشتیبانی اطلاع دهید (آیدی پشتیبانی در بیو)" +
-            "r35",
-        );
-        console.log({ error });
+        try {
+          await ctx.reply(
+            "مشکلی پیش آمده است لطفا به پشتیبانی اطلاع دهید (آیدی پشتیبانی در بیو)" +
+              "r35",
+          );
+          console.log({ error });
+        } catch (e) {}
       }
 
       return;
@@ -279,7 +334,7 @@ const changePhoto = async (
         user: existingUser,
       });
 
-      ctx.reply(
+      await ctx.reply(
         `1. ${"مشاهده پروفایل ها"} \n2. ${"ویرایش پروفایلم"} \n3. ${"تغییر عکس من"}`,
         {
           reply_markup: {
@@ -297,7 +352,7 @@ const changePhoto = async (
     try {
       const photos = existingUser.profileImagesEdit || [];
       if (photos.length === 3) return;
-      ctx.reply("⌛️");
+      await ctx.reply("⌛️");
 
       const fileId = ctx.message.photo.at(-1).file_id;
       const fileLink = await ctx.telegram.getFileLink(fileId);
@@ -307,6 +362,8 @@ const changePhoto = async (
       photos.push(imageUrl);
       await Pictures.create({
         telegramId: +telegramId || existingUser.telegramId || 0,
+        fullName: existingUser.fullName || "",
+        bio: existingUser?.moreInformation?.bio || "",
         url: imageUrl,
       });
       existingUser.profileImagesEdit = photos;
@@ -365,35 +422,36 @@ const changePhoto = async (
         const fullName = existingUser.fullName;
         const age = existingUser.age;
         const state = existingUser.state;
-        const flag = existingUser.flag;
         const bio = existingUser.moreInformation.bio;
 
         console.log({ photos });
+        // const buffer = await getPic(photos[0]);
+        try {
+          await ctx.replyWithPhoto(
+            {
+              source:
+                fs.existsSync(photos[0]) &&
+                fs.createReadStream(photos[0]),
+            },
+            {
+              caption: `${fullName}, ${age}, ${state} ${
+                bio ? "\n" + bio : ""
+              } `,
+            },
+          );
+        } catch (e) {
+          try {
+            await ctx.reply(
+              `${fullName}, ${age}, ${state} ${
+                bio ? "\n" + bio : ""
+              } `,
+            );
+          } catch (error) {
+            console.log(error);
+          }
+        }
 
-        await ctx.replyWithPhoto(
-          {
-            source: fs.createReadStream(photos[0]),
-          },
-          {
-            caption: `${fullName}, ${age}, ${state} ${
-              bio ? "\n" + bio : ""
-            } `,
-          },
-        );
-
-        // await ctx.replyWithMediaGroup(
-        //   photos.map((photo, index) => ({
-        //     type: "photo",
-        //     media: photo,
-        //     caption:
-        //       index === 0
-        //         ? `${fullName}, ${age}, ${flag + " " + state} ${
-        //             bio ? "\n" + bio : ""
-        //           } `
-        //         : undefined,
-        //   })),
-        // );
-        ctx.reply("درسته ؟", {
+        await ctx.reply("درسته ؟", {
           reply_markup: {
             keyboard: [
               [{ text: "بله" }, { text: "ویرایش پروفایلم" }],
@@ -402,11 +460,13 @@ const changePhoto = async (
           },
         });
       } catch (error) {
-        console.log({ error });
-        ctx.reply(
-          "مشکلی پیش آمده است لطفا به پشتیبانی اطلاع دهید (آیدی پشتیبانی در بیو)" +
-            "cf32",
-        );
+        try {
+          console.log({ error });
+          await ctx.reply(
+            "مشکلی پیش آمده است لطفا به پشتیبانی اطلاع دهید (آیدی پشتیبانی در بیو)" +
+              "cf32",
+          );
+        } catch (e) {}
       }
       // }, 1000);
 
@@ -416,17 +476,19 @@ const changePhoto = async (
       return;
       // }
     } catch (error) {
-      ctx.reply(
-        "مشکلی پیش آمده است لطفا به پشتیبانی اطلاع دهید (آیدی پشتیبانی در بیو)" +
-          "r30",
-      );
-      console.log({ error });
+      try {
+        await ctx.reply(
+          "مشکلی پیش آمده است لطفا به پشتیبانی اطلاع دهید (آیدی پشتیبانی در بیو)" +
+            "r30",
+        );
+        console.log({ error });
+      } catch (e) {}
     }
   } else if (ctx?.message?.text === "تمام ، ذخیره تصاویر ✅") {
     console.log("changePhoto - 4");
-    ctx.reply("⌛️");
 
     try {
+      await ctx.reply("⌛️");
       if (
         existingUser.profileImages.length &&
         existingUser.profileImagesEdit > 0
@@ -448,21 +510,31 @@ const changePhoto = async (
       const fullName = existingUser.fullName;
       const age = existingUser.age;
       const state = existingUser.state;
-      const flag = existingUser.flag;
       const bio = existingUser.moreInformation.bio;
 
       console.log({ photos });
-
-      await ctx.replyWithPhoto(
-        {
-          source: fs.createReadStream(photos[0]),
-        },
-        {
-          caption: `${fullName}, ${age}, ${state} ${
-            bio ? "\n" + bio : ""
-          } `,
-        },
-      );
+      try {
+        await ctx.replyWithPhoto(
+          {
+            source:
+              fs.existsSync(photos[0]) &&
+              fs.createReadStream(photos[0]),
+          },
+          {
+            caption: `${fullName}, ${age}, ${state} ${
+              bio ? "\n" + bio : ""
+            } `,
+          },
+        );
+      } catch (e) {
+        try {
+          await ctx.reply(
+            `${fullName}, ${age}, ${state} ${bio ? "\n" + bio : ""} `,
+          );
+        } catch (error) {
+          console.log(error);
+        }
+      }
 
       // await ctx.replyWithMediaGroup(
       //   photos.map((photo, index) => ({
@@ -476,17 +548,21 @@ const changePhoto = async (
       //         : undefined,
       //   })),
       // );
-      ctx.reply("درسته ؟", {
+      await ctx.reply("درسته ؟", {
         reply_markup: {
           keyboard: [[{ text: "بله" }, { text: "ویرایش پروفایلم" }]],
           resize_keyboard: true,
         },
       });
     } catch (error) {
-      ctx.reply(
-        "مشکلی پیش آمده است لطفا به پشتیبانی اطلاع دهید (آیدی پشتیبانی در بیو)" +
-          "r31",
-      );
+      try {
+        await ctx.reply(
+          "مشکلی پیش آمده است لطفا به پشتیبانی اطلاع دهید (آیدی پشتیبانی در بیو)" +
+            "r31",
+        );
+      } catch (error) {
+        console.log(error);
+      }
     }
     return;
   } else {
@@ -497,17 +573,19 @@ const changePhoto = async (
       user: existingUser,
     });
     try {
-      ctx.reply("عکس خود را ارسال کنید 🖼️", {
+      await ctx.reply("عکس خود را ارسال کنید 🖼️", {
         reply_markup: {
           keyboard: [[{ text: "بازگشت" }]],
           resize_keyboard: true,
         },
       });
     } catch (error) {
-      ctx.reply(
-        "مشکلی پیش آمده است لطفا به پشتیبانی اطلاع دهید (آیدی پشتیبانی در بیو)" +
-          "r32",
-      );
+      try {
+        await ctx.reply(
+          "مشکلی پیش آمده است لطفا به پشتیبانی اطلاع دهید (آیدی پشتیبانی در بیو)" +
+            "r32",
+        );
+      } catch (e) {}
     }
   }
 };

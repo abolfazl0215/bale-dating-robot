@@ -6,6 +6,7 @@ const User = require("../models/User.js");
 const protobuf = require("protobufjs");
 const { texts } = require("../data/languages.js");
 
+
 const checkNewLikesForSendNotif = async () => {
   try {
     const getData = await redisClient.getBuffer(`newLikes`);
@@ -53,11 +54,6 @@ const checkNewLikesForSendNotif = async () => {
               }
             }
 
-            let userLanguage = findUser?.language || "en";
-            let languageText = texts.find(
-              (text) => text.language === userLanguage,
-            );
-
             if (
               findUser?.userStep !== "notificationMenu" &&
               findUser?.userStep !== "notifications" &&
@@ -74,20 +70,16 @@ const checkNewLikesForSendNotif = async () => {
                 await bot.telegram.sendMessage(
                   +telegramId__,
                   `${
-                    numberOfMen !== 0
-                      ? `${numberOfMen} ${languageText.men}`
-                      : ""
+                    numberOfMen !== 0 ? `${numberOfMen} ${"آقا"}` : ""
                   } ${
                     numberOfMen !== 0 && numberOfWomen !== 0
-                      ? languageText.and
+                      ? "و"
                       : ""
                   } ${
                     numberOfWomen !== 0
-                      ? `${numberOfWomen} ${languageText.women}`
+                      ? `${numberOfWomen} ${"خانم"}`
                       : ""
-                  } ${languageText.likedYou}.\n\n1. ${
-                    languageText.show
-                  }\n2. ${languageText.sleepMode}`,
+                  } ${"شما را لایک کردند . یه نگاهی بنداز "}.\n\n1. ${"نمایش"}\n2. ${"حالت خواب"}`,
                   {
                     reply_markup: {
                       keyboard: [[{ text: "1 🚀" }, { text: "2" }]],

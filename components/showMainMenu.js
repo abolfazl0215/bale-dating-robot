@@ -19,25 +19,29 @@ const showMainMenu = async (
     });
 
     if (ctx?.message?.text === "☰") {
-      // Show main menu
-      await ctx.reply(
-        `1. ${"مشاهده پروفایل ها"}\n2. ${"پروفایل من"}\n3. ${"حالت خواب"}\n----------------------------\n4. ${"دوستان خود را دعوت کنید تا لایک های بیشتری دریافت کنید 😎"}`,
-        {
-          reply_markup: {
-            keyboard: [
-              [
-                { text: "1 🚀" },
-                { text: "2" },
-                { text: "3" },
-                { text: "4" },
-                //{ text: "5" },
+      try {
+        await ctx.reply(
+          `1. ${"مشاهده پروفایل ها"}\n2. ${"پروفایل من"}\n3. ${"حالت خواب"}\n----------------------------\n4. ${"دوستان خود را دعوت کنید تا لایک های بیشتری دریافت کنید 😎"}`,
+          {
+            reply_markup: {
+              keyboard: [
+                [
+                  { text: "1 🚀" },
+                  { text: "2" },
+                  { text: "3" },
+                  { text: "4" },
+                  //{ text: "5" },
+                ],
               ],
-            ],
-            resize_keyboard: true,
-            is_persistent: true,
+              resize_keyboard: true,
+              is_persistent: true,
+            },
           },
-        },
-      );
+        );
+      } catch (error) {
+        console.log(error);
+      }
+      // Show main menu
     } else if (ctx?.message?.text === "❤️") {
       if (
         forYouList.get(telegramId) &&
@@ -51,9 +55,14 @@ const showMainMenu = async (
       }
 
       if (!existingUser.firstLike) {
-        await ctx.reply(
-          "❤️ : لایک\n❌ : (رد کردن)نوپ\n💌 : پیام\n☰ : منو\n\nوقتی کاربری را لایک میکنید ، لایک شما برای او ارسال میشود و اگر اوهم شما را لایک کند ، متصل میشوید .",
-        );
+        try {
+          await ctx.reply(
+            "❤️ : لایک\n❌ : (رد کردن)نوپ\n💌 : پیام\n☰ : منو\n\nوقتی کاربری را لایک میکنید ، لایک شما برای او ارسال میشود و اگر اوهم شما را لایک کند ، متصل میشوید .",
+          );
+        } catch (error) {
+          console.log(error);
+        }
+
         existingUser.firstLike = 1;
         usersMap.set(telegramId, {
           time: Date.now(),
@@ -93,18 +102,23 @@ const showMainMenu = async (
       userTelId = forYouList.get(telegramId)[0].telegramId;
 
       const photos = profileImages;
-      await ctx.replyWithMediaGroup(
-        photos.map((photo, index) => ({
-          type: "photo",
-          media: photo,
-          caption:
-            index === 0
-              ? `${fullName}, ${age}, ${flag + " " + state} ${
-                  bio ? "\n" + bio : ""
-                }\n/user_${inviteCode_from_forYouList || "not_found"}`
-              : undefined,
-        })),
-      );
+      try {
+        await ctx.replyWithMediaGroup(
+          photos.map((photo, index) => ({
+            type: "photo",
+            media: photo,
+            caption:
+              index === 0
+                ? `${fullName}, ${age}, ${flag + " " + state} ${
+                    bio ? "\n" + bio : ""
+                  }\n/user_${inviteCode_from_forYouList || "not_found"}`
+                : undefined,
+          })),
+        );
+      } catch (error) {
+        console.log(error);
+      }
+
       existingUser.lastViewed =
         +forYouList.get(telegramId)[0].telegramId;
       usersMap.set(telegramId, {
@@ -115,9 +129,14 @@ const showMainMenu = async (
       const targetId = forYouList.get(telegramId)?.[0]?.telegramId;
 
       if (!existingUser.firstNope) {
-        await ctx.reply(
-          "❤️ : لایک\n❌ : (رد کردن)نوپ\n💌 : پیام\n☰ : منو\n\nوقتی کاربری را لایک میکنید ، لایک شما برای او ارسال میشود و اگر اوهم شما را لایک کند ، متصل میشوید .",
-        );
+        try {
+          await ctx.reply(
+            "❤️ : لایک\n❌ : (رد کردن)نوپ\n💌 : پیام\n☰ : منو\n\nوقتی کاربری را لایک میکنید ، لایک شما برای او ارسال میشود و اگر اوهم شما را لایک کند ، متصل میشوید .",
+          );
+        } catch (error) {
+          console.log(error);
+        }
+
         existingUser.firstNope = 1;
         usersMap.set(telegramId, {
           time: Date.now(),
@@ -151,18 +170,23 @@ const showMainMenu = async (
       userTelId = forYouList.get(telegramId)[0].telegramId;
 
       const photos = profileImages;
-      await ctx.replyWithMediaGroup(
-        photos.map((photo, index) => ({
-          type: "photo",
-          media: photo,
-          caption:
-            index === 0
-              ? `${fullName}, ${age}, ${flag + " " + state} ${
-                  bio ? "\n" + bio : ""
-                }\n/user_${inviteCode_from_forYouList || "not_found"}`
-              : undefined,
-        })),
-      );
+      try {
+        await ctx.replyWithMediaGroup(
+          photos.map((photo, index) => ({
+            type: "photo",
+            media: photo,
+            caption:
+              index === 0
+                ? `${fullName}, ${age}, ${flag + " " + state} ${
+                    bio ? "\n" + bio : ""
+                  }\n/user_${inviteCode_from_forYouList || "not_found"}`
+                : undefined,
+          })),
+        );
+      } catch (error) {
+        console.log(error);
+      }
+
       existingUser.lastViewed =
         +forYouList.get(telegramId)[0].telegramId;
       usersMap.set(telegramId, {
@@ -175,29 +199,39 @@ const showMainMenu = async (
         time: Date.now(),
         user: existingUser,
       });
-      ctx.reply("پیام خود را ارسال کنید 🧐👇🏽");
+      try {
+        await ctx.reply("پیام خود را ارسال کنید 🧐👇🏽");
+      } catch (error) {
+        console.log(error);
+      }
     } else {
-      ctx.reply("🧐👇🏽", {
-        reply_markup: {
-          keyboard: [
-            [
-              { text: "💌" },
-              { text: "❌" },
-              { text: "❤️" },
-              { text: "☰" },
+      try {
+        await ctx.reply("🧐👇🏽", {
+          reply_markup: {
+            keyboard: [
+              [
+                { text: "☰" },
+                { text: "❤️" },
+                { text: "❌" },
+                { text: "💌" },
+              ],
             ],
-          ],
-          resize_keyboard: true,
-          is_persistent: true,
-        },
-      });
+            resize_keyboard: true,
+            is_persistent: true,
+          },
+        });
+      } catch (error) {
+        console.log(error);
+      }
     }
   } catch (error) {
     console.error("Error in showMainMenu:", error);
-    ctx.reply(
-      "مشکلی پیش آمده است لطفا به پشتیبانی اطلاع دهید (آیدی پشتیبانی در بیو)" +
-        "r3",
-    );
+    try {
+      await ctx.reply(
+        "مشکلی پیش آمده است لطفا به پشتیبانی اطلاع دهید (آیدی پشتیبانی در بیو)" +
+          "r3",
+      );
+    } catch (e) {}
   }
 };
 

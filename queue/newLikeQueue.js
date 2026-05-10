@@ -2,13 +2,15 @@ const { redisClient } = require("../config/redis");
 const User = require("../models/User");
 const protobuf = require("protobufjs");
 
+
+
 const newLikeQueueController = async ({ telegramId, liker }) => {
   // ست کردن کاربران اولیه در forYou
   const getData = await redisClient.getBuffer(`newLikes`);
 
   if (Buffer.isBuffer(getData)) {
     const userRoot = await protobuf.load(
-      "./protoBuf_files/newLike.proto",
+      "../protoBuf_files/newLike.proto",
     );
 
     let NewLikeProto = userRoot.lookupType("Users");

@@ -30,6 +30,7 @@ const redisClient = new Redis(
   },
 );
 
+
 const defaultQueueOptions = {
   defaultJobOptions: {
     attempts: 5,
