@@ -5,7 +5,7 @@ const badWords = [
     "خایه", "مادرجنده", "توله سگ", "خارکسه", "گایید", "گاییدن", "جنده‌خانه", "روسپی", "فاحشه","لخت","لختی", "بیزینس",
     "سگ‌صفت", "پوفیوز", "جاکش", "آلت", "تخمات", "مادر قحبه", "ننه‌ات", "عن", "دیوث", "مادر به خطا",
     "قرمساق", "اواخواهر", "داف", "کون لق", "عمه‌ات", "پدرسگ", "خارکسده", "زن جنده", "خر مادر", "شرمو",
-    "بیزی","پول","برده","مفعول","فاعل","کیرم","کصم","حشریم","حشرم",
+    "بیزی","پول","برده","مفعول","فاعل","کیرم","کصم","حشریم","حشرم","حشر","لزبین","لز","گایید","مادرتو","خواهرتو","لواط","فیلم سوپر",
     // فینگلیش / انگلیسی لاتین
     "kir","sexy", "koskhol","hashari","hashar","hashary","horni","horny","hozori","khale", "koskesh", "koon", "kosk", "jende", "haroomzadeh", "sex", "jagh", "jaghi", "mame", 
     "pestan", "bi namoos", "bi sharaf", "fuck", "dick", "pussy", "bitch", "whore", "slut", "fag", 
@@ -14,7 +14,7 @@ const badWords = [
     "porno", "pornography", "sexcam", "xxx", "screwing", "horny", "nude", "nudity", "butt", "ass",
     "anal", "deepthroat", "milf", "nsfw", "sexy", "rapist", "rape", "molest", "incest", "pegging",
     "rimjob", "spank", "strapon", "threesome", "twat", "wank", "jerking", "masturbate", "orgasm", 
-    "penetrate", "erotic", "fetish", "pervert", "bdsm", "sodomy"
+    "penetrate", "erotic", "fetish", "pervert", "bdsm", "sodomy","lez","lezbian"
   ];
 
   module.exports = badWords;

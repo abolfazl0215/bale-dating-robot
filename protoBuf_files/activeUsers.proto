@@ -1,5 +1,5 @@
 syntax = "proto3";
-package com.abolfazlMokhtari.pounes.proto;
+package com.abolfazl021mokhtaritari.pounes.proto;
 
 message Users {
    repeated User users = 1;
@@ -26,6 +26,7 @@ message User {
   int32 score = 18;
   repeated string profileImages = 19;
   string inviteCode = 20;
+  string genderFilter = 21;
 }
 
 

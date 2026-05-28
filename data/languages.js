@@ -39,9 +39,11 @@ const texts = [
     giftLikeCount: "ممون از دعوت شما . 100 لایک هدیه دریافت کردید.",
     inviteCodeNotFound: "کد معرف یافت نشد.",
     userNotFound: "کاربر یافت نشد.",
-    youHaveAlreadyReportedThisUser: "شما قبلا برای این کاربر گزارش داده اید.",
+    youHaveAlreadyReportedThisUser:
+      "شما قبلا برای این کاربر گزارش داده اید.",
     reportSubmitted: "گزارش شما ثبت شد ✅",
-    errorInActivatingPv: "خطا در فعال سازی پیام رسانی. لطفا دوباره تلاش کنید.",
+    errorInActivatingPv:
+      "خطا در فعال سازی پیام رسانی. لطفا دوباره تلاش کنید.",
     pvActivated: "پیام رسانی فعال شد ✅",
     reportAdvertisement: "تبلیغات",
     reportInappropriateContent: "ارسال محتوای غیر اخلاقی",
@@ -69,7 +71,7 @@ const texts = [
       "دوستان خود را دعوت کنید تا لایک های بیشتری دریافت کنید 😎",
     directMessageText: "پیام خود را ارسال کنید 🧐👇🏽",
     firstLikeText:
-      "❤️ : لایک\n❌ : (رد کردن)نوپ\n💌 : پیام\n☰ : منو\n\nوقتی کاربری را لایک میکنید ، لایک شما برای او ارسال میشود و اگر اوهم شما را لایک کند ، متصل میشوید .",
+      "❤️ : لایک\n❌ : (رد کردن)نوپ\n💌 : لایک به همراه پیام\n☰ : منو\n\nوقتی کاربری را لایک میکنید ، لایک شما برای او ارسال میشود و اگر اوهم شما را لایک کند ، متصل میشوید .",
     shareText:
       "ربات دوستیابی پونس 🔥 در بله است! یک دوست جدید یا حتی یک عاشق پیدا کنید 👫",
     shareText2:
@@ -145,10 +147,12 @@ const texts = [
   {
     language: "en",
     backToMainMenu: "Back to main menu",
-    giftLikeCount: "Thank you for inviting. You have received 100 like gift.",
+    giftLikeCount:
+      "Thank you for inviting. You have received 100 like gift.",
     inviteCodeNotFound: "Invite code not found.",
     userNotFound: "User not found.",
-    youHaveAlreadyReportedThisUser: "You have already reported this user.",
+    youHaveAlreadyReportedThisUser:
+      "You have already reported this user.",
     reportSubmitted: "Report submitted ✅",
     errorInActivatingPv: "Error in activating pv. Please try again.",
     pvActivated: "Pv activated ✅",
@@ -258,12 +262,15 @@ const texts = [
   {
     language: "ru",
     backToMainMenu: "Вернуться в главное меню",
-    giftLikeCount: "Спасибо за приглашение. Вы получили 100 лайков в подарок.",
+    giftLikeCount:
+      "Спасибо за приглашение. Вы получили 100 лайков в подарок.",
     inviteCodeNotFound: "Код приглашения не найден.",
     userNotFound: "Пользователь не найден.",
-    youHaveAlreadyReportedThisUser: "Вы уже сообщили об этом пользователе.",
+    youHaveAlreadyReportedThisUser:
+      "Вы уже сообщили об этом пользователе.",
     reportSubmitted: "Сообщение отправлено ✅",
-    errorInActivatingPv: "Ошибка при активации пересылки сообщений. Пожалуйста, попробуйте еще раз.",
+    errorInActivatingPv:
+      "Ошибка при активации пересылки сообщений. Пожалуйста, попробуйте еще раз.",
     pvActivated: "Пересылка сообщений активирована ✅",
     reportAdvertisement: "Реклама",
     reportInappropriateContent: "Непристойное содержание",
@@ -376,12 +383,15 @@ const texts = [
   {
     language: "hi",
     backToMainMenu: "मुख्य मेनू पर वापस जाएं",
-    giftLikeCount: "आपका स्वागत है. आपने 100 लाइक हैदर प्राप्त कर लिए हैं।",
+    giftLikeCount:
+      "आपका स्वागत है. आपने 100 लाइक हैदर प्राप्त कर लिए हैं।",
     inviteCodeNotFound: "आमंत्रण कोड नहीं खोजा गया।",
     userNotFound: "उपयोगकर्ता नहीं खोजा गया।",
-    youHaveAlreadyReportedThisUser: "आपने पहले ही इस उपयोगकर्ता को रिपोर्ट कर लिए हैं।",
+    youHaveAlreadyReportedThisUser:
+      "आपने पहले ही इस उपयोगकर्ता को रिपोर्ट कर लिए हैं।",
     reportSubmitted: "रिपोर्ट जमा की गई ✅",
-    errorInActivatingPv: "पीवी सक्रिय करने में एरर हुआ है। कृपया पुनः प्रयास करें।",
+    errorInActivatingPv:
+      "पीवी सक्रिय करने में एरर हुआ है। कृपया पुनः प्रयास करें।",
     pvActivated: "पीवी सक्रिय की गई ✅",
     reportAdvertisement: "विज्ञापन",
     reportInappropriateContent: "अनुकूल सामग्री",
@@ -493,9 +503,11 @@ const texts = [
     giftLikeCount: "Taklif uchun rahmat. 100 layk hediya olasiz.",
     inviteCodeNotFound: "Taklif kodi topilmadi.",
     userNotFound: "Foydalanuvchi topilmadi.",
-    youHaveAlreadyReportedThisUser: "Siz bu foydalanuvchini allaqachon hisobot qildingiz.",
+    youHaveAlreadyReportedThisUser:
+      "Siz bu foydalanuvchini allaqachon hisobot qildingiz.",
     reportSubmitted: "Hisobot yuborildi ✅",
-    errorInActivatingPv: "Pv aktivlashtirishda xatolik. Iltimos, qayta urinib ko'ring.",
+    errorInActivatingPv:
+      "Pv aktivlashtirishda xatolik. Iltimos, qayta urinib ko'ring.",
     pvActivated: "Pv aktivlashtirildi ✅",
     reportAdvertisement: "Reklama",
     reportInappropriateContent: "Tog‘ri emas",
@@ -612,9 +624,11 @@ const texts = [
     giftLikeCount: "Taklif uchun rahmat. 100 layk hediya olasiz.",
     inviteCodeNotFound: "Taklif kodi topilmadi.",
     userNotFound: "Foydalanuvchi topilmadi.",
-    youHaveAlreadyReportedThisUser: "Siz bu foydalanuvchini allaqachon hisobot qildingiz.",
+    youHaveAlreadyReportedThisUser:
+      "Siz bu foydalanuvchini allaqachon hisobot qildingiz.",
     reportSubmitted: "Hisobot yuborildi ✅",
-    errorInActivatingPv: "Pv aktivlashtirishda xatolik. Iltimos, qayta urinib ko'ring.",
+    errorInActivatingPv:
+      "Pv aktivlashtirishda xatolik. Iltimos, qayta urinib ko'ring.",
     pvActivated: "Pv aktivlashtirildi ✅",
     reportAdvertisement: "Reklama",
     reportInappropriateContent: "Tog‘ri emas",
@@ -724,9 +738,11 @@ const texts = [
     giftLikeCount: "Taklif uchun rahmat. 100 layk hediya olasiz.",
     inviteCodeNotFound: "Taklif kodi topilmadi.",
     userNotFound: "Foydalanuvchi topilmadi.",
-    youHaveAlreadyReportedThisUser: "Siz bu foydalanuvchini allaqachon hisobot qildingiz.",
+    youHaveAlreadyReportedThisUser:
+      "Siz bu foydalanuvchini allaqachon hisobot qildingiz.",
     reportSubmitted: "Hisobot yuborildi ✅",
-    errorInActivatingPv: "Pv aktivlashtirishda xatolik. Iltimos, qayta urinib ko'ring.",
+    errorInActivatingPv:
+      "Pv aktivlashtirishda xatolik. Iltimos, qayta urinib ko'ring.",
     pvActivated: "Pv aktivlashtirildi ✅",
     reportAdvertisement: "Reklama",
     reportInappropriateContent: "Tog‘ri emas",
@@ -838,9 +854,11 @@ const texts = [
     giftLikeCount: "Taklif uchun rahmat. 100 layk hediya olasiz.",
     inviteCodeNotFound: "Taklif kodi topilmadi.",
     userNotFound: "Foydalanuvchi topilmadi.",
-    youHaveAlreadyReportedThisUser: "Siz bu foydalanuvchini allaqachon hisobot qildingiz.",
+    youHaveAlreadyReportedThisUser:
+      "Siz bu foydalanuvchini allaqachon hisobot qildingiz.",
     reportSubmitted: "Hisobot yuborildi ✅",
-    errorInActivatingPv: "Pv aktivlashtirishda xatolik. Iltimos, qayta urinib ko'ring.",
+    errorInActivatingPv:
+      "Pv aktivlashtirishda xatolik. Iltimos, qayta urinib ko'ring.",
     pvActivated: "Pv aktivlashtirildi ✅",
     reportAdvertisement: "Reklama",
     reportInappropriateContent: "Tog‘ri emas",
@@ -954,9 +972,11 @@ const texts = [
     giftLikeCount: "Taklif uchun rahmat. 100 layk hediya olasiz.",
     inviteCodeNotFound: "Taklif kodi topilmadi.",
     userNotFound: "Foydalanuvchi topilmadi.",
-    youHaveAlreadyReportedThisUser: "Siz bu foydalanuvchini allaqachon hisobot qildingiz.",
+    youHaveAlreadyReportedThisUser:
+      "Siz bu foydalanuvchini allaqachon hisobot qildingiz.",
     reportSubmitted: "Hisobot yuborildi ✅",
-    errorInActivatingPv: "Pv aktivlashtirishda xatolik. Iltimos, qayta urinib ko'ring.",
+    errorInActivatingPv:
+      "Pv aktivlashtirishda xatolik. Iltimos, qayta urinib ko'ring.",
     pvActivated: "Pv aktivlashtirildi ✅",
     reportAdvertisement: "Реклама",
     reportInappropriateContent: "Непристойное содержание",
@@ -1072,9 +1092,11 @@ const texts = [
     giftLikeCount: "Taklif uchun rahmat. 100 layk hediya olasiz.",
     inviteCodeNotFound: "Taklif kodi topilmadi.",
     userNotFound: "Foydalanuvchi topilmadi.",
-    youHaveAlreadyReportedThisUser: "Siz bu foydalanuvchini allaqachon hisobot qildingiz.",
+    youHaveAlreadyReportedThisUser:
+      "Siz bu foydalanuvchini allaqachon hisobot qildingiz.",
     reportSubmitted: "Hisobot yuborildi ✅",
-    errorInActivatingPv: "Pv aktivlashtirishda xatolik. Iltimos, qayta urinib ko'ring.",
+    errorInActivatingPv:
+      "Pv aktivlashtirishda xatolik. Iltimos, qayta urinib ko'ring.",
     pvActivated: "Pv aktivlashtirildi ✅",
     reportAdvertisement: "Реклама",
     reportInappropriateContent: "Непристойное содержание",
@@ -1187,12 +1209,15 @@ const texts = [
   {
     language: "hy",
     backToMainMenu: "Վերադառնալ հիմնական մենյու",
-    giftLikeCount: "Շնորհակալություն հրավերի համար։ Դուք ստացել եք 100 հավանության նվեր։",
+    giftLikeCount:
+      "Շնորհակալություն հրավերի համար։ Դուք ստացել եք 100 հավանության նվեր։",
     inviteCodeNotFound: "Հրավերի կոդը չի գտնվել։",
     userNotFound: "Օգտագործողը չի գտնվել։",
-    youHaveAlreadyReportedThisUser: "Դուք արդեն բողոքել եք այս օգտատիրոջ մասին։",
+    youHaveAlreadyReportedThisUser:
+      "Դուք արդեն բողոքել եք այս օգտատիրոջ մասին։",
     reportSubmitted: "Բողոքը ուղարկվեց ✅",
-    errorInActivatingPv: "Սխալ՝ անձնական զրույցը ակտիվացնելիս։ Խնդրում ենք կրկին փորձել։",
+    errorInActivatingPv:
+      "Սխալ՝ անձնական զրույցը ակտիվացնելիս։ Խնդրում ենք կրկին փորձել։",
     pvActivated: "Անձնական զրույցը ակտիվացվեց ✅",
     reportAdvertisement: "Ռեկլամա",
     reportInappropriateContent: "Ոչ համապատասխան ներկայացում",
@@ -1302,12 +1327,15 @@ const texts = [
   {
     language: "ka",
     backToMainMenu: "Վերադառնալ հիմնական մենյու",
-    giftLikeCount: "Շնորհակալություն հրավերի համար։ Դուք ստացել եք 100 հավանության նվեր։",
+    giftLikeCount:
+      "Շնորհակալություն հրավերի համար։ Դուք ստացել եք 100 հավանության նվեր։",
     inviteCodeNotFound: "Հրավերի կոդը չի գտնվել։",
     userNotFound: "Օգտագործողը չի գտնվել։",
-    youHaveAlreadyReportedThisUser: "Դուք արդեն բողոքել եք այս օգտատիրոջ մասին։",
+    youHaveAlreadyReportedThisUser:
+      "Դուք արդեն բողոքել եք այս օգտատիրոջ մասին։",
     reportSubmitted: "Բողոքը ուղարկվեց ✅",
-    errorInActivatingPv: "Սխալ՝ անձնական զրույցը ակտիվացնելիս։ Խնդրում ենք կրկին փորձել։",
+    errorInActivatingPv:
+      "Սխալ՝ անձնական զրույցը ակտիվացնելիս։ Խնդրում ենք կրկին փորձել։",
     pvActivated: "Անձնական զրույցը ակտիվացվեց ✅",
     reportAdvertisement: "რეკლამა",
     reportInappropriateContent: "არასწორი შესახები მასალა",
@@ -1417,13 +1445,17 @@ const texts = [
     registerSuccessful: "რეგისტრაცია წარმატებით დასრულდა 🎉",
   },
   {
-    language: "tr",    backToMainMenu: "Վերադառնալ հիմնական մենյու",
-    giftLikeCount: "Շնորհակալություն հրավերի համար։ Դուք ստացել եք 100 հավանության նվեր։",
+    language: "tr",
+    backToMainMenu: "Վերադառնալ հիմնական մենյու",
+    giftLikeCount:
+      "Շնորհակալություն հրավերի համար։ Դուք ստացել եք 100 հավանության նվեր։",
     inviteCodeNotFound: "Հրավերի կոդը չի գտնվել։",
     userNotFound: "Օգտագործողը չի գտնվել։",
-    youHaveAlreadyReportedThisUser: "Դուք արդեն բողոքել եք այս օգտատիրոջ մասին։",
+    youHaveAlreadyReportedThisUser:
+      "Դուք արդեն բողոքել եք այս օգտատիրոջ մասին։",
     reportSubmitted: "Բողոքը ուղարկվեց ✅",
-    errorInActivatingPv: "Սխալ՝ անձնական զրույցը ակտիվացնելիս։ Խնդրում ենք կրկին փորձել։",
+    errorInActivatingPv:
+      "Սխալ՝ անձնական զրույցը ակտիվացնելիս։ Խնդրում ենք կրկին փորձել։",
     pvActivated: "Անձնական զրույցը ակտիվացվեց ✅",
     reportAdvertisement: "Reklama",
     reportInappropriateContent: "Uygunsuz içerik",
@@ -1533,12 +1565,14 @@ const texts = [
   {
     language: "pt",
     backToMainMenu: "Voltar para o menu principal",
-    giftLikeCount: "Obrigado por convidar. Você recebeu 100 likes em presente.",
+    giftLikeCount:
+      "Obrigado por convidar. Você recebeu 100 likes em presente.",
     inviteCodeNotFound: "Código de convite não encontrado.",
     userNotFound: "Usuário não encontrado.",
     youHaveAlreadyReportedThisUser: "Você já reportou este usuário.",
     reportSubmitted: "Reporte enviado ✅",
-    errorInActivatingPv: "Erro ao ativar pv. Por favor, tente novamente.",
+    errorInActivatingPv:
+      "Erro ao ativar pv. Por favor, tente novamente.",
     pvActivated: "Pv ativado ✅",
     reportAdvertisement: "Anúncio",
     reportInappropriateContent: "Conteúdo inapropriado",
@@ -1648,12 +1682,15 @@ const texts = [
   {
     language: "id",
     backToMainMenu: "Kembali ke menu utama",
-    giftLikeCount: "Terima kasih telah mengundang. Anda telah menerima 100 like hadiah.",
+    giftLikeCount:
+      "Terima kasih telah mengundang. Anda telah menerima 100 like hadiah.",
     inviteCodeNotFound: "Kode undangan tidak ditemukan.",
     userNotFound: "Pengguna tidak ditemukan.",
-    youHaveAlreadyReportedThisUser: "Anda sudah melaporkan pengguna ini.",
+    youHaveAlreadyReportedThisUser:
+      "Anda sudah melaporkan pengguna ini.",
     reportSubmitted: "Laporan terkirim ✅",
-    errorInActivatingPv: "Kesalahan saat mengaktifkan pv. Silakan coba lagi.",
+    errorInActivatingPv:
+      "Kesalahan saat mengaktifkan pv. Silakan coba lagi.",
     pvActivated: "Pv diaktifkan ✅",
     reportAdvertisement: "Reklama",
     reportInappropriateContent: "Konten tidak pantas",
@@ -1765,9 +1802,11 @@ const texts = [
     giftLikeCount: "Taklif uchun rahmat. 100 layk hediya olasiz.",
     inviteCodeNotFound: "Taklif kodi topilmadi.",
     userNotFound: "Foydalanuvchi topilmadi.",
-    youHaveAlreadyReportedThisUser: "Siz bu foydalanuvchini allaqachon hisobot qildingiz.",
+    youHaveAlreadyReportedThisUser:
+      "Siz bu foydalanuvchini allaqachon hisobot qildingiz.",
     reportSubmitted: "Hisobot yuborildi ✅",
-    errorInActivatingPv: "Pv aktivlashtirishda xatolik. Iltimos, qayta urinib ko'ring.",
+    errorInActivatingPv:
+      "Pv aktivlashtirishda xatolik. Iltimos, qayta urinib ko'ring.",
     pvActivated: "Pv aktivlashtirildi ✅",
     reportAdvertisement: "Реклама",
     reportInappropriateContent: "Непристойное содержание",
@@ -1876,12 +1915,15 @@ const texts = [
   {
     language: "es",
     backToMainMenu: "Volver al menú principal",
-    giftLikeCount: "Gracias por invitar. Has recibido 100 likes en regalo.",
+    giftLikeCount:
+      "Gracias por invitar. Has recibido 100 likes en regalo.",
     inviteCodeNotFound: "Código de invitación no encontrado.",
     userNotFound: "Usuario no encontrado.",
-    youHaveAlreadyReportedThisUser: "Ya has reportado a este usuario.",
+    youHaveAlreadyReportedThisUser:
+      "Ya has reportado a este usuario.",
     reportSubmitted: "Reporte enviado ✅",
-    errorInActivatingPv: "Error al activar pv. Por favor, inténtalo de nuevo.",
+    errorInActivatingPv:
+      "Error al activar pv. Por favor, inténtalo de nuevo.",
     pvActivated: "Pv activado ✅",
     reportAdvertisement: "Anuncio",
     reportInappropriateContent: "Contenido inapropriado",
@@ -1992,12 +2034,15 @@ const texts = [
   {
     language: "fr",
     backToMainMenu: "Retour au menu principal",
-    giftLikeCount: "Merci de votre invitation. Vous avez reçu 100 likes en cadeau.",
+    giftLikeCount:
+      "Merci de votre invitation. Vous avez reçu 100 likes en cadeau.",
     inviteCodeNotFound: "Code d'invitation non trouvé.",
     userNotFound: "Utilisateur non trouvé.",
-    youHaveAlreadyReportedThisUser: "Vous avez déjà signalé cet utilisateur.",
+    youHaveAlreadyReportedThisUser:
+      "Vous avez déjà signalé cet utilisateur.",
     reportSubmitted: "Signalement envoyé ✅",
-    errorInActivatingPv: "Erreur lors de l'activation du pv. Veuillez réessayer.",
+    errorInActivatingPv:
+      "Erreur lors de l'activation du pv. Veuillez réessayer.",
     pvActivated: "Pv activé ✅",
     reportAdvertisement: "Réclame",
     reportInappropriateContent: "Contenu inapproprié",
@@ -2109,12 +2154,15 @@ const texts = [
   {
     language: "de",
     backToMainMenu: "Zurück zum Hauptmenü",
-    giftLikeCount: "Danke für Ihre Einladung. Sie haben 100 Likes als Geschenk erhalten.",
+    giftLikeCount:
+      "Danke für Ihre Einladung. Sie haben 100 Likes als Geschenk erhalten.",
     inviteCodeNotFound: "Einladungscode nicht gefunden.",
     userNotFound: "Benutzer nicht gefunden.",
-    youHaveAlreadyReportedThisUser: "Sie haben diesen Benutzer bereits gemeldet.",
+    youHaveAlreadyReportedThisUser:
+      "Sie haben diesen Benutzer bereits gemeldet.",
     reportSubmitted: "Melde erfolgreich ✅",
-    errorInActivatingPv: "Fehler beim Aktivieren des pv. Bitte versuchen Sie es erneut.",
+    errorInActivatingPv:
+      "Fehler beim Aktivieren des pv. Bitte versuchen Sie es erneut.",
     pvActivated: "Pv aktiviert ✅",
     reportAdvertisement: "Reklame",
     reportInappropriateContent: "Unpassende Inhalte",
@@ -2226,12 +2274,15 @@ const texts = [
   {
     language: "ur",
     backToMainMenu: "مینو پر واپس جائیں",
-    giftLikeCount: "تشکر کریں کیونکہ آپ نے 100 لیک ہدیہ حاصل کر لیا ہے۔",
+    giftLikeCount:
+      "تشکر کریں کیونکہ آپ نے 100 لیک ہدیہ حاصل کر لیا ہے۔",
     inviteCodeNotFound: "دعوت کا کوڈ تلاش نہیں کیا گیا ہے۔",
     userNotFound: "صارف تلاش نہیں کیا گیا ہے۔",
-    youHaveAlreadyReportedThisUser: "آپ پہلے ہی اس صارف کو رپورٹ کر لیا ہے۔",
+    youHaveAlreadyReportedThisUser:
+      "آپ پہلے ہی اس صارف کو رپورٹ کر لیا ہے۔",
     reportSubmitted: "رپورٹ بھیج دی گئی ✅",
-    errorInActivatingPv: "پیو فعال کرنے میں خرابی ہے۔ براہ مہربانی دوبارہ کوشش کریں۔",
+    errorInActivatingPv:
+      "پیو فعال کرنے میں خرابی ہے۔ براہ مہربانی دوبارہ کوشش کریں۔",
     pvActivated: "پیو فعال کیا گیا ہے ✅",
     reportAdvertisement: "اشتہارات",
     reportInappropriateContent: "غیر مناسب مواد بھیجنا",
@@ -2450,9 +2501,11 @@ const texts = [
     giftLikeCount: "شكرا لك على الدعوة. حصلت على 100 إعجاب كهدية.",
     inviteCodeNotFound: "رمز الدعوة غير موجود.",
     userNotFound: "المستخدم غير موجود.",
-    youHaveAlreadyReportedThisUser: "لقد قمت بالإبلاغ عن هذا المستخدم من قبل.",
+    youHaveAlreadyReportedThisUser:
+      "لقد قمت بالإبلاغ عن هذا المستخدم من قبل.",
     reportSubmitted: "تم إرسال الإبلاغ بنجاح ✅",
-    errorInActivatingPv: "خطأ في تفعيل الإرسال. يرجى المحاولة مرة أخرى.",
+    errorInActivatingPv:
+      "خطأ في تفعيل الإرسال. يرجى المحاولة مرة أخرى.",
     pvActivated: "تم تفعيل الإرسال بنجاح ✅",
     reportAdvertisement: "إعلانات",
     reportInappropriateContent: "إرسال محتوى غير أخلاقي",

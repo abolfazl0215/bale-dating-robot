@@ -1,15 +1,20 @@
 const chunkArray = require("../../utils/chunkArray.js");
 const fs = require("fs");
 const { getPic } = require("../../utils/getPic.js");
+const { reply } = require("../../telegram_methods/reply.js");
+const {
+  requestToFillSuggestQueue,
+} = require("../../config/redis.js");
 
 const editProfileMenu = async (
   ctx,
+  next,
+  redisClient,
   telegramId,
   existingUser,
   usersMap,
   forYouList,
   forYouTime,
-  suggestQueue,
   ages,
 ) => {
   if (ctx?.message?.text === "1🚀") {
@@ -26,21 +31,29 @@ const editProfileMenu = async (
         forYouTime.get(telegramId) &&
         forYouTime.get(telegramId) + 600000 > Date.now()
       ) {
-        await ctx.reply("🔎", {
-          reply_markup: {
-            keyboard: [
-              [
-                { text: "☰" },
-                { text: "❤️" },
-                { text: "❌" },
-                { text: "💌" },
-              ],
-            ],
-            resize_keyboard: true,
-            one_time_keyboard: false,
-            is_persistent: true,
-          },
-        });
+        // await ctx.reply("🔎", {
+        //   reply_markup: {
+        //     keyboard: [
+        //       [
+        //         { text: "☰" },
+        //         { text: "❤️" },
+        //         { text: "❌" },
+        //         { text: "💌" },
+        //       ],
+        //     ],
+        //     resize_keyboard: true,
+        //     one_time_keyboard: false,
+        //     is_persistent: true,
+        //   },
+        // });
+        await reply(ctx, next, redisClient, "🔎", [
+          [
+            { text: "☰" },
+            { text: "❤️" },
+            { text: "❌" },
+            { text: "💌" },
+          ],
+        ]);
 
         const {
           fullName,
@@ -65,11 +78,12 @@ const editProfileMenu = async (
         try {
           // const buffer = await getPic(photos[0]);
           await ctx.replyWithPhoto(
-            {
-              source:
-                fs.existsSync(photos[0]) &&
-                fs.createReadStream(photos[0]),
-            },
+            photos[0],
+            // {
+            //   source:
+            //     fs.existsSync(photos[0]) &&
+            //     fs.createReadStream(photos[0]),
+            // },
             {
               caption: `${fullName}, ${age}, ${state} ${
                 bio ? "\n" + bio : ""
@@ -78,7 +92,15 @@ const editProfileMenu = async (
           );
         } catch (error) {
           try {
-            await ctx.reply(
+            // await ctx.reply(
+            //   `${fullName}, ${age}, ${state} ${
+            //     bio ? "\n" + bio : ""
+            //   } \n/user_${inviteCode_from_forYouList || "not_found"}`,
+            // );
+            await reply(
+              ctx,
+              next,
+              redisClient,
               `${fullName}, ${age}, ${state} ${
                 bio ? "\n" + bio : ""
               } \n/user_${inviteCode_from_forYouList || "not_found"}`,
@@ -105,27 +127,35 @@ const editProfileMenu = async (
       } else {
         forYouTime.set(telegramId, Date.now());
         // add to search queue
-        suggestQueue.add({
+        requestToFillSuggestQueue.add({
           telegramId,
           user: existingUser,
         });
 
         try {
-          await ctx.reply("🔎", {
-            reply_markup: {
-              keyboard: [
-                [
-                  { text: "☰" },
-                  { text: "❤️" },
-                  { text: "❌" },
-                  { text: "💌" },
-                ],
-              ],
-              resize_keyboard: true,
-              one_time_keyboard: false,
-              is_persistent: true,
-            },
-          });
+          // await ctx.reply("🔎", {
+          //   reply_markup: {
+          //     keyboard: [
+          //       [
+          //         { text: "☰" },
+          //         { text: "❤️" },
+          //         { text: "❌" },
+          //         { text: "💌" },
+          //       ],
+          //     ],
+          //     resize_keyboard: true,
+          //     one_time_keyboard: false,
+          //     is_persistent: true,
+          //   },
+          // });
+          await reply(ctx, next, redisClient, "🔎", [
+            [
+              { text: "☰" },
+              { text: "❤️" },
+              { text: "❌" },
+              { text: "💌" },
+            ],
+          ]);
         } catch (error) {
           console.log(error);
         }
@@ -148,11 +178,12 @@ const editProfileMenu = async (
           try {
             // const buffer = await getPic(photos[0]);
             await ctx.replyWithPhoto(
-              {
-                source:
-                  fs.existsSync(photos[0]) &&
-                  fs.createReadStream(photos[0]),
-              },
+              photos[0],
+              // {
+              //   source:
+              //     fs.existsSync(photos[0]) &&
+              //     fs.createReadStream(photos[0]),
+              // },
               {
                 caption: `${fullName}, ${age}, ${state} ${
                   bio ? "\n" + bio : ""
@@ -161,7 +192,15 @@ const editProfileMenu = async (
             );
           } catch (error) {
             try {
-              await ctx.reply(
+              // await ctx.reply(
+              //   `${fullName}, ${age}, ${state} ${
+              //     bio ? "\n" + bio : ""
+              //   }\n/user_${inviteCode_from_forYouList || "not_found"}`,
+              // );
+              await reply(
+                ctx,
+                next,
+                redisClient,
                 `${fullName}, ${age}, ${state} ${
                   bio ? "\n" + bio : ""
                 }\n/user_${inviteCode_from_forYouList || "not_found"}`,
@@ -210,26 +249,74 @@ const editProfileMenu = async (
     });
 
     try {
-      await ctx.reply("سن خود را انتخاب کنید", {
-        reply_markup: {
-          keyboard: [...chunkArray(ages, 4)],
-          resize_keyboard: true,
-          one_time_keyboard: false,
-          is_persistent: true,
-        },
-      });
+      // await ctx.reply("سن خود را انتخاب کنید", {
+      //   reply_markup: {
+      //     keyboard: [...chunkArray(ages, 4)],
+      //     resize_keyboard: true,
+      //     one_time_keyboard: false,
+      //     is_persistent: true,
+      //   },
+      // });
+      await reply(ctx, next, redisClient, "سن خود را انتخاب کنید", [
+        ...chunkArray(ages, 4),
+      ]);
     } catch (error) {
       try {
-        await ctx.reply(
-          "مشکلی پیش آمده است لطفا به پشتیبانی اطلاع دهید (آیدی پشتیبانی در بیو)" +
-            "r8",
+        // await ctx.reply(
+        //   "مشکلی پیش آمده است لطفا به پشتیبانی اطلاع دهید (آیدی پشتیبانی در بیو)" +
+        //     "r8",
+        // );
+        await reply(
+          ctx,
+          next,
+          redisClient,
+          "مشکلی پیش آمده است لطفا به پشتیبانی اطلاع دهید (آیدی پشتیبانی در بیو) r878",
         );
       } catch (error) {
         console.log({ error });
       }
     }
   } else if (ctx?.message?.text === "3") {
+    if (
+      !existingUser?.limitGetPicture ||
+      !existingUser?.limitGetPicture?.time
+    )
+      existingUser.limitGetPicture = {
+        time: Date.now(),
+        count: 0,
+      };
+
+    const lastTimeSetPic = existingUser?.limitGetPicture?.time;
+    console.log({ lastTimeSetPic });
+    if (lastTimeSetPic + 86400000 < Date.now())
+      existingUser.limitGetPicture = {
+        time: Date.now(),
+        count: 0,
+      };
+
+    if (
+      lastTimeSetPic + 86400000 > Date.now() &&
+      existingUser?.limitGetPicture?.count >= 3
+    ) {
+      existingUser.userStep = "editProfileMenu";
+
+      usersMap.set(telegramId, {
+        time: Date.now(),
+        user: existingUser,
+      });
+
+      await reply(
+        ctx,
+        next,
+        redisClient,
+        `⭕ در هر روز فقط 3 بار میتوانید تصویر پروفایل را تغییر دهید`,
+        [[{ text: "1🚀" }, { text: "2" }, { text: "3" }]],
+      );
+      return;
+    }
+
     existingUser.userStep = "changePhoto";
+    existingUser.changePhotoStep = "";
     // await existingUser.save();
 
     usersMap.set(telegramId, {
@@ -238,25 +325,45 @@ const editProfileMenu = async (
     });
 
     try {
-      await ctx.reply("عکس خود را ارسال کنید 🖼️", {
-        reply_markup: {
-          keyboard: [
-            [
-              {
-                text: "بازگشت",
-              },
-            ],
+      // await ctx.reply("عکس خود را ارسال کنید 🖼️", {
+      //   reply_markup: {
+      //     keyboard: [
+      //       [
+      //         {
+      //           text: "بازگشت",
+      //         },
+      //       ],
+      //     ],
+      //     resize_keyboard: true,
+      //     one_time_keyboard: false,
+      //     is_persistent: true,
+      //   },
+      // });
+
+      await reply(
+        ctx,
+        next,
+        redisClient,
+        "عکس خود را ارسال کنید 🖼️",
+        [
+          [
+            {
+              text: "بازگشت",
+            },
           ],
-          resize_keyboard: true,
-          one_time_keyboard: false,
-          is_persistent: true,
-        },
-      });
+        ],
+      );
     } catch (error) {
       try {
-        await ctx.reply(
-          "مشکلی پیش آمده است لطفا به پشتیبانی اطلاع دهید (آیدی پشتیبانی در بیو)" +
-            "r27",
+        // await ctx.reply(
+        //   "مشکلی پیش آمده است لطفا به پشتیبانی اطلاع دهید (آیدی پشتیبانی در بیو)" +
+        //     "r27",
+        // );
+        await reply(
+          ctx,
+          next,
+          redisClient,
+          "مشکلی پیش آمده است لطفا به پشتیبانی اطلاع دهید (آیدی پشتیبانی در بیو) r5821",
         );
       } catch (error) {
         console.log({ error });
@@ -264,22 +371,36 @@ const editProfileMenu = async (
     }
   } else {
     try {
-      await ctx.reply(
+      // await ctx.reply(
+      //   `1. ${"مشاهده پروفایل ها"} \n2. ${"ویرایش پروفایلم"} \n3. ${"تغییر عکس من"}`,
+      //   {
+      //     reply_markup: {
+      //       keyboard: [
+      //         [
+      //           { text: "1🚀" },
+      //           { text: "2" },
+      //           { text: "3" },
+      //           { text: "4" },
+      //         ],
+      //       ],
+      //       resize_keyboard: true,
+      //       is_persistent: true,
+      //     },
+      //   },
+      // );
+      await reply(
+        ctx,
+        next,
+        redisClient,
         `1. ${"مشاهده پروفایل ها"} \n2. ${"ویرایش پروفایلم"} \n3. ${"تغییر عکس من"}`,
-        {
-          reply_markup: {
-            keyboard: [
-              [
-                { text: "1🚀" },
-                { text: "2" },
-                { text: "3" },
-                { text: "4" },
-              ],
-            ],
-            resize_keyboard: true,
-            is_persistent: true,
-          },
-        },
+        [
+          [
+            { text: "1🚀" },
+            { text: "2" },
+            { text: "3" },
+            { text: "4" },
+          ],
+        ],
       );
     } catch (error) {
       console.log({ error });

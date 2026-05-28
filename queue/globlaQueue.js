@@ -63,8 +63,6 @@ const globalOperationsQueueController = async ({ type, data }) => {
         ),
       );
 
-      
-
       // ذخیره امتیاز
       await redisClient.hset(
         `user:${targetId}`,
@@ -101,7 +99,6 @@ const globalOperationsQueueController = async ({ type, data }) => {
       //   ? +forYouList.get(telegramId)?.[0]?.telegramId
       //   : 0;
 
-
       if (targetId) {
         // likes.unshift(currentItem);
         // viewed.unshift(currentItem);
@@ -109,8 +106,8 @@ const globalOperationsQueueController = async ({ type, data }) => {
         addToTop(likes, +targetId);
         addToTop(viewed, +targetId);
 
-        likes = likes.slice(0, 300);
-        viewed = viewed.slice(0, 300);
+        likes = likes.slice(0, 500);
+        viewed = viewed.slice(0, 500);
 
         await redisClient.hmset(`user:${telegramId}`, {
           likes: JSON.stringify(likes),
@@ -157,7 +154,7 @@ const globalOperationsQueueController = async ({ type, data }) => {
         receiveLikes.unshift(fullItem);
         viewMyProfile++;
 
-        receiveLikes = receiveLikes.slice(0, 300);
+        receiveLikes = receiveLikes.slice(0, 500);
 
         await redisClient.hmset(`user:${targetId}`, {
           receiveLikes: JSON.stringify(receiveLikes),
@@ -172,6 +169,7 @@ const globalOperationsQueueController = async ({ type, data }) => {
     }
   } else if (type === "nope") {
     const { telegramId, targetId } = data;
+
     try {
       const profileViewCountStr =
         (await redisClient.hget(
@@ -221,8 +219,6 @@ const globalOperationsQueueController = async ({ type, data }) => {
         ),
       );
 
-
-
       // ذخیره امتیاز
       await redisClient.hset(
         `user:${targetId}`,
@@ -249,9 +245,9 @@ const globalOperationsQueueController = async ({ type, data }) => {
       if (targetId) {
         // viewed.unshift(+targetId);
 
-        addToTop(viewed, +targetId);
+        addToTop(viewed, targetId);
 
-        viewed = viewed.slice(0, 300);
+        viewed = viewed.slice(0, 500);
 
         await redisClient.hset(`user:${telegramId}`, {
           viewed: JSON.stringify(viewed),

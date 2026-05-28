@@ -7,6 +7,27 @@ const badWords = require("../data/words");
 const protobuf = require("protobufjs");
 const usersMap = require("../utils/usersMap");
 const { getPic } = require("../utils/getPic");
+const { reply } = require("../telegram_methods/reply");
+const Pictures = require("../models/Pictures");
+const { requestToFillSuggestQueue } = require("../config/redis");
+
+function containsLinkOrTelegramID(str) {
+  // الگوی کلی برای تشخیص انواع لینک‌های URL
+  // این الگو شامل http, https, ftp, www. و دامنه‌های معمولی هست
+  const urlPattern =
+    /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|]|\bwww\.[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/gi;
+
+  // الگوی تشخیص آیدی تلگرام (@username)
+  // حداقل ۵ کاراکتر بعد از @ و فقط حروف، اعداد و خط زیر مجاز هستند
+  const telegramUsernamePattern =
+    /(^|[^a-zA-Z0-9_])@[A-Za-z0-9_]{5,}/;
+
+  // چک می‌کنیم که آیا رشته شامل لینک هست یا آیدی تلگرام
+  const hasLink = urlPattern.test(str);
+  const hasTelegramID = telegramUsernamePattern.test(str);
+
+  return hasLink || hasTelegramID;
+}
 
 const states = [
   { local: "آذربایجان شرقی", english: "East Azerbaijan" },
@@ -53,6 +74,7 @@ const states = [
 
 const editProfileInBot = async (
   ctx,
+  next,
   chunkArray,
   ages,
   telegramId,
@@ -60,9 +82,9 @@ const editProfileInBot = async (
   redisClient,
   forYouList,
   forYouTime,
-  suggestQueue,
-  foryouQueue,
+  activeUsersQueue,
   telegramName,
+  ActiveUsersProto,
 ) => {
   const step = savedUser.editProfileStep;
 
@@ -85,95 +107,76 @@ const editProfileInBot = async (
         user: savedUser,
       });
       try {
-        await ctx.reply(
+        // await ctx.reply(
+        //   "خطا ، لطفا یکی از اعداد زیر را انتخاب کنید",
+        //   {
+        //     reply_markup: {
+        //       keyboard: [...chunkArray(ages, 4)],
+        //       resize_keyboard: true,
+        //       one_time_keyboard: false,
+        //       is_persistent: true,
+        //     },
+        //   },
+        // );
+        await reply(
+          ctx,
+          next,
+          redisClient,
           "خطا ، لطفا یکی از اعداد زیر را انتخاب کنید",
-          {
-            reply_markup: {
-              keyboard: [...chunkArray(ages, 4)],
-              resize_keyboard: true,
-              one_time_keyboard: false,
-              is_persistent: true,
-            },
-          },
+          [...chunkArray(ages, 4)],
         );
       } catch (error) {
         try {
-          await ctx.reply(
-            "مشکلی پیش آمده است لطفا به پشتیبانی اطلاع دهید (آیدی پشتیبانی در بیو)" +
-              "r8",
+          // await ctx.reply(
+          //   "مشکلی پیش آمده است لطفا به پشتیبانی اطلاع دهید (آیدی پشتیبانی در بیو)" +
+          //     "r8",
+          // );
+          await reply(
+            ctx,
+            next,
+            redisClient,
+            "مشکلی پیش آمده است لطفا به پشتیبانی اطلاع دهید (آیدی پشتیبانی در بیو) jhw22",
           );
           console.log(error);
         } catch (e) {}
       }
     } else {
-      savedUser.editProfileStep = "gender";
+      savedUser.editProfileStep = "lookingFor";
       savedUser.age = Number(ctx?.message?.text) || 1;
       // await savedUser.save();
 
       await User.findOneAndUpdate(
         { telegramId },
-        { editProfileStep: "gender", age: savedUser.age },
+        { editProfileStep: "lookingFor", age: savedUser.age },
       );
 
       usersMap.set(telegramId, {
         time: Date.now(),
         user: savedUser,
       });
-      // ctx.replyWithInvoice({
-      //   title: "اشتراک ماهانه",
-      //   description:
-      //     "با خرید اشتراک به امکانات ویژه دسترسی خواهید داشت.",
-      //   payload: "premium_subscription_monthly",
-      //   provider_token: "STARS",
-      //   currency: "XTR",
-      //   prices: [
-      //     {
-      //       label: "اشتراک 1 ماهه",
-      //       amount: 1, // معادل 10 ستاره (1 ستاره = 10)
-      //     },
-      //   ],
-      //   is_flexible: false,
-      //   start_parameter: "subscribe-now",
-      //   reply_markup: {
-      //     inline_keyboard: [
-      //       [
-      //         {
-      //           text: "پرداخت با ستاره‌ها",
-      //           pay: true,
-      //         },
-      //       ],
-      //     ],
-      //   },
-      // });
 
       try {
-        await ctx.reply("جنسیت خود را انتخاب کنید", {
-          reply_markup: {
-            keyboard: [
-              [
-                {
-                  text: "خانم",
-                },
-                {
-                  text: "آقا",
-                },
-              ],
-              [
-                {
-                  text: "مرحله قبلی",
-                },
-              ],
+        await reply(
+          ctx,
+          next,
+          redisClient,
+          "به دنبال چه کسی می گردید ؟",
+          [
+            [
+              { text: "خانم 💁‍♀️" },
+              { text: "آقا 🙆‍♂️" },
+              { text: "فرقی ندارد ⚧️" },
             ],
-            resize_keyboard: true,
-            one_time_keyboard: false,
-            is_persistent: true,
-          },
-        });
+            [{ text: "مرحله قبلی" }],
+          ],
+        );
       } catch (error) {
         try {
-          await ctx.reply(
-            "مشکلی پیش آمده است لطفا به پشتیبانی اطلاع دهید (آیدی پشتیبانی در بیو)" +
-              "r9",
+          await reply(
+            ctx,
+            next,
+            redisClient,
+            "مشکلی پیش آمده است لطفا به پشتیبانی اطلاع دهید (آیدی پشتیبانی در بیو) qjd7",
           );
         } catch (e) {}
       }
@@ -181,12 +184,12 @@ const editProfileInBot = async (
   }
   if (step === "gender") {
     if (
-      ctx?.message?.text === "خانم" ||
-      ctx?.message?.text === "آقا"
+      ctx?.message?.text === "خانم 💁‍♀️" ||
+      ctx?.message?.text === "آقا 🙆‍♂️"
     ) {
       savedUser.editProfileStep = "lookingFor";
       savedUser.gender =
-        ctx?.message?.text === "خانم" ? "female" : "male";
+        ctx?.message?.text === "خانم 💁‍♀️" ? "female" : "male";
       // await savedUser.save();
 
       await User.findOneAndUpdate(
@@ -200,26 +203,27 @@ const editProfileInBot = async (
       });
 
       try {
-        await ctx.reply("به دنبال چه کسی می گردید ؟", {
-          reply_markup: {
-            keyboard: [
-              [
-                { text: "خانم" },
-                { text: "آقا" },
-                { text: "فرقی ندارد" },
-              ],
-              [{ text: "مرحله قبلی" }],
+        await reply(
+          ctx,
+          next,
+          redisClient,
+          "به دنبال چه کسی می گردید ؟",
+          [
+            [
+              { text: "خانم 💁‍♀️" },
+              { text: "آقا 🙆‍♂️" },
+              { text: "فرقی ندارد ⚧️" },
             ],
-            resize_keyboard: true,
-            one_time_keyboard: false,
-            is_persistent: true,
-          },
-        });
+            [{ text: "مرحله قبلی" }],
+          ],
+        );
       } catch (error) {
         try {
-          await ctx.reply(
-            "مشکلی پیش آمده است لطفا به پشتیبانی اطلاع دهید (آیدی پشتیبانی در بیو)" +
-              "r10",
+          await reply(
+            ctx,
+            next,
+            redisClient,
+            "مشکلی پیش آمده است لطفا به پشتیبانی اطلاع دهید (آیدی پشتیبانی در بیو) qjd7",
           );
         } catch (e) {}
       }
@@ -238,54 +242,90 @@ const editProfileInBot = async (
       });
 
       try {
-        await ctx.reply("سن خود را انتخاب کنید", {
-          reply_markup: {
-            keyboard: [...chunkArray(ages, 4)],
-            resize_keyboard: true,
-            one_time_keyboard: false,
-            is_persistent: true,
-          },
-        });
+        // await ctx.reply("سن خود را انتخاب کنید", {
+        //   reply_markup: {
+        //     keyboard: [...chunkArray(ages, 4)],
+        //     resize_keyboard: true,
+        //     one_time_keyboard: false,
+        //     is_persistent: true,
+        //   },
+        // });
+        await reply(ctx, next, redisClient, "سن خود را انتخاب کنید", [
+          ...chunkArray(ages, 4),
+        ]);
       } catch (error) {
         try {
-          await ctx.reply(
-            "مشکلی پیش آمده است لطفا به پشتیبانی اطلاع دهید (آیدی پشتیبانی در بیو)" +
-              "r11",
+          // await ctx.reply(
+          //   "مشکلی پیش آمده است لطفا به پشتیبانی اطلاع دهید (آیدی پشتیبانی در بیو)" +
+          //     "r11",
+          // );
+          await reply(
+            ctx,
+            next,
+            redisClient,
+            "مشکلی پیش آمده است لطفا به پشتیبانی اطلاع دهید (آیدی پشتیبانی در بیو) fghv87",
           );
         } catch (e) {}
       }
     } else {
       try {
-        await ctx.reply(
+        // await ctx.reply(
+        //   "خطا ، لطفا یکی از گزینه های زیر را انتخاب کنید",
+        //   {
+        //     reply_markup: {
+        //       keyboard: [
+        //         [
+        //           {
+        //             text: "خانم 💁‍♀️",
+        //           },
+        //           {
+        //             text: "آقا 🙆‍♂️",
+        //           },
+        //         ],
+        //         [
+        //           {
+        //             text: "مرحله قبلی",
+        //           },
+        //         ],
+        //       ],
+        //       resize_keyboard: true,
+        //       one_time_keyboard: false,
+        //       is_persistent: true,
+        //     },
+        //   },
+        // );
+        await reply(
+          ctx,
+          next,
+          redisClient,
           "خطا ، لطفا یکی از گزینه های زیر را انتخاب کنید",
-          {
-            reply_markup: {
-              keyboard: [
-                [
-                  {
-                    text: "خانم",
-                  },
-                  {
-                    text: "آقا",
-                  },
-                ],
-                [
-                  {
-                    text: "مرحله قبلی",
-                  },
-                ],
-              ],
-              resize_keyboard: true,
-              one_time_keyboard: false,
-              is_persistent: true,
-            },
-          },
+          [
+            [
+              {
+                text: "خانم 💁‍♀️",
+              },
+              {
+                text: "آقا 🙆‍♂️",
+              },
+            ],
+            [
+              {
+                text: "مرحله قبلی",
+              },
+            ],
+          ],
         );
       } catch (error) {
         try {
-          await ctx.reply(
-            "مشکلی پیش آمده است لطفا به پشتیبانی اطلاع دهید (آیدی پشتیبانی در بیو)" +
-              "r12",
+          // await ctx.reply(
+          //   "مشکلی پیش آمده است لطفا به پشتیبانی اطلاع دهید (آیدی پشتیبانی در بیو)" +
+          //     "r12",
+          // );
+          await reply(
+            ctx,
+            next,
+            redisClient,
+            "مشکلی پیش آمده است لطفا به پشتیبانی اطلاع دهید (آیدی پشتیبانی در بیو) wjl456",
           );
         } catch (e) {}
       }
@@ -293,15 +333,15 @@ const editProfileInBot = async (
   }
   if (step === "lookingFor") {
     if (
-      ctx?.message?.text === "خانم" ||
-      ctx?.message?.text === "آقا" ||
-      ctx?.message?.text === "فرقی ندارد"
+      ctx?.message?.text === "خانم 💁‍♀️" ||
+      ctx?.message?.text === "آقا 🙆‍♂️" ||
+      ctx?.message?.text === "فرقی ندارد ⚧️"
     ) {
-      savedUser.editProfileStep = "state";
+      savedUser.editProfileStep = "genderFilter";
       savedUser.lookingFor =
-        ctx?.message?.text === "خانم"
+        ctx?.message?.text === "خانم 💁‍♀️"
           ? "female"
-          : ctx?.message?.text === "آقا"
+          : ctx?.message?.text === "آقا 🙆‍♂️"
             ? "male"
             : "noMatter";
       // await savedUser.save();
@@ -309,7 +349,7 @@ const editProfileInBot = async (
       await User.findOneAndUpdate(
         { telegramId },
         {
-          editProfileStep: "state",
+          editProfileStep: "genderFilter",
           lookingFor: savedUser.lookingFor,
         },
       );
@@ -320,33 +360,39 @@ const editProfileInBot = async (
       });
 
       try {
-        const showStates = states.map((item) => item.local);
-        await ctx.reply("استان خود را انتخاب کنید", {
-          reply_markup: {
-            keyboard: [
-              [{ text: "مرحله قبلی" }],
-              ...chunkArray(showStates, 3),
-            ],
-            resize_keyboard: true,
-            one_time_keyboard: false,
-            is_persistent: true,
-          },
-        });
+        await reply(
+          ctx,
+          next,
+          redisClient,
+          "پروفایل شما به چه کسانی نمایش داده شود ؟",
+          [
+            [{ text: "به همه نمایش بده 😎" }],
+            [{ text: "فقط خانم ها 💁‍♀️" }, { text: "فقط آقایان 🙆‍♂️" }],
+            [{ text: "مرحله قبلی" }],
+          ],
+        );
       } catch (error) {
+        console.log(error);
         try {
-          await ctx.reply(
-            "مشکلی پیش آمده است لطفا به پشتیبانی اطلاع دهید (آیدی پشتیبانی در بیو)" +
-              "r13",
+          // await ctx.reply(
+          //   "مشکلی پیش آمده است لطفا به پشتیبانی اطلاع دهید (آیدی پشتیبانی در بیو)" +
+          //     "r5",
+          // );
+          await reply(
+            ctx,
+            next,
+            redisClient,
+            "مشکلی پیش آمده است لطفا به پشتیبانی اطلاع دهید (آیدی پشتیبانی در بیو)",
           );
         } catch (e) {}
       }
     } else if (ctx?.message?.text === "مرحله قبلی") {
-      savedUser.editProfileStep = "gender";
+      savedUser.editProfileStep = "age";
       // await savedUser.save();
 
       await User.findOneAndUpdate(
         { telegramId },
-        { editProfileStep: "gender" },
+        { editProfileStep: "age" },
       );
 
       usersMap.set(telegramId, {
@@ -355,70 +401,99 @@ const editProfileInBot = async (
       });
 
       try {
-        await ctx.reply("جنسیت خود را انتخاب کنید", {
-          reply_markup: {
-            keyboard: [
-              [
-                {
-                  text: "خانم",
-                },
-                {
-                  text: "آقا",
-                },
-              ],
-              [
-                {
-                  text: "مرحله قبلی",
-                },
-              ],
-            ],
-            resize_keyboard: true,
-            one_time_keyboard: false,
-            is_persistent: true,
-          },
-        });
+        await reply(ctx, next, redisClient, "سن خود را انتخاب کنید", [
+          ...chunkArray(ages, 4),
+        ]);
       } catch (error) {
         try {
-          await ctx.reply(
-            "مشکلی پیش آمده است لطفا به پشتیبانی اطلاع دهید (آیدی پشتیبانی در بیو)" +
-              "r14",
+          await reply(
+            ctx,
+            next,
+            redisClient,
+            "مشکلی پیش آمده است لطفا به پشتیبانی اطلاع دهید (آیدی پشتیبانی در بیو) fghv87",
           );
         } catch (e) {}
       }
     } else {
       try {
-        await ctx.reply("به دنبال چه کسی می گردید ؟", {
-          reply_markup: {
-            keyboard: [
-              [
-                { text: "خانم" },
-                { text: "آقا" },
-                { text: "فرقی ندارد" },
-              ],
-              [{ text: "مرحله قبلی" }],
+        await reply(
+          ctx,
+          next,
+          redisClient,
+          "به دنبال چه کسی می گردید ؟",
+          [
+            [
+              { text: "خانم 💁‍♀️" },
+              { text: "آقا 🙆‍♂️" },
+              { text: "فرقی ندارد ⚧️" },
             ],
-            resize_keyboard: true,
-            one_time_keyboard: false,
-            is_persistent: true,
-          },
-        });
+            [{ text: "مرحله قبلی" }],
+          ],
+        );
       } catch (error) {
         try {
-          await ctx.reply(
-            "مشکلی پیش آمده است لطفا به پشتیبانی اطلاع دهید (آیدی پشتیبانی در بیو)" +
-              "r15",
+          // await ctx.reply(
+          //   "مشکلی پیش آمده است لطفا به پشتیبانی اطلاع دهید (آیدی پشتیبانی در بیو)" +
+          //     "r15",
+          // );
+          await reply(
+            ctx,
+            next,
+            redisClient,
+            "مشکلی پیش آمده است لطفا به پشتیبانی اطلاع دهید (آیدی پشتیبانی در بیو) hj67w",
           );
         } catch (e) {}
       }
     }
   }
-  if (step === "state") {
-    const findState = states.find(
-      (s) => s.local === ctx?.message?.text,
-    );
-    console.log({ findState, message: ctx?.message?.text });
+  if (step === "genderFilter") {
+    if (
+      ctx?.message?.text === "به همه نمایش بده 😎" ||
+      ctx?.message?.text === "فقط خانم ها 💁‍♀️" ||
+      ctx?.message?.text === "فقط آقایان 🙆‍♂️"
+    ) {
+      savedUser.editProfileStep = "state";
+      savedUser.genderFilter =
+        ctx?.message?.text === "فقط خانم ها 💁‍♀️"
+          ? "female"
+          : ctx?.message?.text === "فقط آقایان 🙆‍♂️"
+            ? "male"
+            : "all";
 
-    if (ctx?.message?.text === "مرحله قبلی") {
+      await User.findOneAndUpdate(
+        { telegramId },
+        {
+          editProfileStep: "state",
+          genderFilter: savedUser.genderFilter,
+        },
+      );
+
+      usersMap.set(telegramId, {
+        time: Date.now(),
+        user: savedUser,
+      });
+
+      try {
+        const showStates = states.map((item) => item.local);
+        await reply(
+          ctx,
+          next,
+          redisClient,
+          "استان خود را انتخاب کنید 🏙️",
+          [[{ text: "مرحله قبلی" }], ...chunkArray(showStates, 3)],
+        );
+      } catch (error) {
+        console.log(error);
+        try {
+          await reply(
+            ctx,
+            next,
+            redisClient,
+            "مشکلی پیش آمده است لطفا به پشتیبانی اطلاع دهید (آیدی پشتیبانی در بیو)",
+          );
+        } catch (e) {}
+      }
+    } else if (ctx?.message?.text === "مرحله قبلی") {
       savedUser.editProfileStep = "lookingFor";
       // await savedUser.save();
       await User.findOneAndUpdate(
@@ -432,26 +507,103 @@ const editProfileInBot = async (
       });
 
       try {
-        await ctx.reply("دنبال چه کسی میگردید ؟", {
-          reply_markup: {
-            keyboard: [
-              [
-                { text: "خانم" },
-                { text: "آقا " },
-                { text: "فرقی ندارد" },
-              ],
-              [{ text: "مرحله قبلی" }],
+        await reply(
+          ctx,
+          next,
+          redisClient,
+          "دنبال چه کسی میگردید ؟ 🔎",
+          [
+            [
+              { text: "خانم 💁‍♀️" },
+              { text: "آقا " },
+              { text: "فرقی ندارد ⚧️" },
             ],
-            resize_keyboard: true,
-            one_time_keyboard: false,
-            is_persistent: true,
-          },
-        });
+            [{ text: "مرحله قبلی" }],
+          ],
+        );
       } catch (error) {
+        console.log(error);
         try {
-          await ctx.reply(
-            "مشکلی پیش آمده است لطفا به پشتیبانی اطلاع دهید (آیدی پشتیبانی در بیو)" +
-              "r15",
+          await reply(
+            ctx,
+            next,
+            redisClient,
+            "مشکلی پیش آمده است لطفا به پشتیبانی اطلاع دهید (آیدی پشتیبانی در بیو)",
+          );
+        } catch (e) {}
+      }
+    } else {
+      try {
+        await reply(
+          ctx,
+          next,
+          redisClient,
+          "پروفایل شما به چه کسانی نمایش داده شود ؟",
+          [
+            [{ text: "به همه نمایش بده 😎" }],
+            [{ text: "فقط خانم ها 💁‍♀️" }, { text: "فقط آقایان 🙆‍♂️" }],
+            [{ text: "مرحله قبلی" }],
+          ],
+        );
+      } catch (error) {
+        console.log(error);
+        try {
+          // await ctx.reply(
+          //   "مشکلی پیش آمده است لطفا به پشتیبانی اطلاع دهید (آیدی پشتیبانی در بیو)" +
+          //     "r5",
+          // );
+          await reply(
+            ctx,
+            next,
+            redisClient,
+            "مشکلی پیش آمده است لطفا به پشتیبانی اطلاع دهید (آیدی پشتیبانی در بیو)",
+          );
+        } catch (e) {}
+      }
+    }
+  }
+  if (step === "state") {
+    const findState = states.find(
+      (s) => s.local === ctx?.message?.text,
+    );
+
+    if (ctx?.message?.text === "مرحله قبلی") {
+      savedUser.editProfileStep = "genderFilter";
+      // await savedUser.save();
+      await User.findOneAndUpdate(
+        { telegramId },
+        { editProfileStep: "genderFilter" },
+      );
+
+      usersMap.set(telegramId, {
+        time: Date.now(),
+        user: savedUser,
+      });
+
+      try {
+        await reply(
+          ctx,
+          next,
+          redisClient,
+          "پروفایل شما به چه کسانی نمایش داده شود ؟",
+          [
+            [{ text: "به همه نمایش بده 😎" }],
+            [{ text: "فقط خانم ها 💁‍♀️" }, { text: "فقط آقایان 🙆‍♂️" }],
+            [{ text: "مرحله قبلی" }],
+          ],
+        );
+      } catch (error) {
+        console.log(error);
+        try {
+          // await ctx.reply(
+          //   "مشکلی پیش آمده است لطفا به پشتیبانی اطلاع دهید (آیدی پشتیبانی در بیو)" +
+          //     "r5",
+          // );
+          await reply(
+            ctx,
+            next,
+            redisClient,
+            "مشکلی پیش آمده است لطفا به پشتیبانی اطلاع دهید (آیدی پشتیبانی در بیو)",
           );
         } catch (e) {}
       }
@@ -471,44 +623,72 @@ const editProfileInBot = async (
       });
 
       try {
-        await ctx.reply("نام خود را وارد کنید", {
-          reply_markup: {
-            keyboard: [
-              [{ text: telegramName || "" }],
-              [{ text: "مرحله قبلی" }],
-            ],
-            resize_keyboard: true,
-            one_time_keyboard: false,
-            is_persistent: true,
-          },
-        });
+        // await ctx.reply("نام خود را وارد کنید 👇🏻", {
+        //   reply_markup: {
+        //     keyboard: [
+        //       [{ text: telegramName }],
+        //       [{ text: "مرحله قبلی" }],
+        //     ],
+        //     resize_keyboard: true,
+        //     one_time_keyboard: false,
+        //     is_persistent: true,
+        //   },
+        // });
+        await reply(
+          ctx,
+          next,
+          redisClient,
+          "نام خود را وارد کنید 👇🏻",
+          [[{ text: telegramName }], [{ text: "مرحله قبلی" }]],
+        );
       } catch (error) {
+        console.log(error);
         try {
-          await ctx.reply(
-            "مشکلی پیش آمده است لطفا به پشتیبانی اطلاع دهید (آیدی پشتیبانی در بیو)" +
-              "r20",
+          // await ctx.reply(
+          //   "مشکلی پیش آمده است لطفا به پشتیبانی اطلاع دهید (آیدی پشتیبانی در بیو)" +
+          //     "r5",
+          // );
+          await reply(
+            ctx,
+            next,
+            redisClient,
+            "مشکلی پیش آمده است لطفا به پشتیبانی اطلاع دهید (آیدی پشتیبانی در بیو)",
           );
         } catch (e) {}
       }
     } else {
       try {
         const showStates = states.map((item) => item.local);
-        await ctx.reply("شهر خود را انتخاب کنید", {
-          reply_markup: {
-            keyboard: [
-              [{ text: "مرحله قبلی" }],
-              ...chunkArray(showStates, 3),
-            ],
-            resize_keyboard: true,
-            one_time_keyboard: false,
-            is_persistent: true,
-          },
-        });
+        // await ctx.reply("شهر خود را انتخاب کنید", {
+        //   reply_markup: {
+        //     keyboard: [
+        //       [{ text: "مرحله قبلی" }],
+        //       ...chunkArray(showStates, 3),
+        //     ],
+        //     resize_keyboard: true,
+        //     one_time_keyboard: false,
+        //     is_persistent: true,
+        //   },
+        // });
+        await reply(
+          ctx,
+          next,
+          redisClient,
+          "شهر خود را انتخاب کنید",
+          [[{ text: "مرحله قبلی" }], ...chunkArray(showStates, 3)],
+        );
       } catch (error) {
+        console.log(error);
         try {
-          await ctx.reply(
-            "مشکلی پیش آمده است لطفا به پشتیبانی اطلاع دهید (آیدی پشتیبانی در بیو)" +
-              "r21",
+          // await ctx.reply(
+          //   "مشکلی پیش آمده است لطفا به پشتیبانی اطلاع دهید (آیدی پشتیبانی در بیو)" +
+          //     "r5",
+          // );
+          await reply(
+            ctx,
+            next,
+            redisClient,
+            "مشکلی پیش آمده است لطفا به پشتیبانی اطلاع دهید (آیدی پشتیبانی در بیو)",
           );
         } catch (e) {}
       }
@@ -531,22 +711,35 @@ const editProfileInBot = async (
 
       try {
         const showStates = states.map((item) => item.local);
-        await ctx.reply("یکی از استان های زیر را انتخاب کنید", {
-          reply_markup: {
-            keyboard: [
-              [{ text: "مرحله قبلی" }],
-              ...chunkArray(showStates, 3),
-            ],
-            resize_keyboard: true,
-            one_time_keyboard: false,
-            is_persistent: true,
-          },
-        });
+        // await ctx.reply("یکی از استان های زیر را انتخاب کنید", {
+        //   reply_markup: {
+        //     keyboard: [
+        //       [{ text: "مرحله قبلی" }],
+        //       ...chunkArray(showStates, 3),
+        //     ],
+        //     resize_keyboard: true,
+        //     one_time_keyboard: false,
+        //     is_persistent: true,
+        //   },
+        // });
+        await reply(
+          ctx,
+          next,
+          redisClient,
+          "یکی از استان های زیر را انتخاب کنید",
+          [[{ text: "مرحله قبلی" }], ...chunkArray(showStates, 3)],
+        );
       } catch (error) {
         try {
-          await ctx.reply(
-            "مشکلی پیش آمده است لطفا به پشتیبانی اطلاع دهید (آیدی پشتیبانی در بیو)" +
-              "r22",
+          // await ctx.reply(
+          //   "مشکلی پیش آمده است لطفا به پشتیبانی اطلاع دهید (آیدی پشتیبانی در بیو)" +
+          //     "r22",
+          // );
+          await reply(
+            ctx,
+            next,
+            redisClient,
+            "مشکلی پیش آمده است لطفا به پشتیبانی اطلاع دهید (آیدی پشتیبانی در بیو)",
           );
         } catch (e) {}
       }
@@ -565,22 +758,35 @@ const editProfileInBot = async (
       });
 
       try {
-        await ctx.reply("نام خود را وارد کنید", {
-          reply_markup: {
-            keyboard: [
-              [{ text: telegramName }],
-              [{ text: "مرحله قبلی" }],
-            ],
-            resize_keyboard: true,
-            one_time_keyboard: false,
-            is_persistent: true,
-          },
-        });
+        // await ctx.reply("نام خود را وارد کنید 👇🏻", {
+        //   reply_markup: {
+        //     keyboard: [
+        //       [{ text: telegramName }],
+        //       [{ text: "مرحله قبلی" }],
+        //     ],
+        //     resize_keyboard: true,
+        //     one_time_keyboard: false,
+        //     is_persistent: true,
+        //   },
+        // });
+        await reply(
+          ctx,
+          next,
+          redisClient,
+          "نام خود را وارد کنید 👇🏻",
+          [[{ text: telegramName }], [{ text: "مرحله قبلی" }]],
+        );
       } catch (error) {
         try {
-          await ctx.reply(
-            "مشکلی پیش آمده است لطفا به پشتیبانی اطلاع دهید (آیدی پشتیبانی در بیو)" +
-              "r23",
+          // await ctx.reply(
+          //   "مشکلی پیش آمده است لطفا به پشتیبانی اطلاع دهید (آیدی پشتیبانی در بیو)" +
+          //     "r23",
+          // );
+          await reply(
+            ctx,
+            next,
+            redisClient,
+            "مشکلی پیش آمده است لطفا به پشتیبانی اطلاع دهید (آیدی پشتیبانی در بیو)",
           );
         } catch (e) {}
       }
@@ -592,10 +798,37 @@ const editProfileInBot = async (
       );
       if (isBadWord) {
         try {
-          ctx.reply("حاوی کلمات نامناسب");
+          // ctx.reply("حاوی کلمات نامناسب ⛔");
+          await reply(
+            ctx,
+            next,
+            redisClient,
+            "حاوی کلمات نامناسب ⛔",
+          );
         } catch (e) {}
         return;
       }
+
+      if (containsLinkOrTelegramID(ctx?.message?.text)) {
+        await reply(
+          ctx,
+          next,
+          redisClient,
+          "نام نمیتواند شامل لینک یا آیدی باشد ⭕",
+        );
+        return;
+      }
+
+      if (ctx?.message?.text?.length > 25) {
+        await reply(
+          ctx,
+          next,
+          redisClient,
+          "تعداد کاراکتر بیش از حد مجاز است ⭕",
+        );
+        return;
+      }
+
       // save name
       savedUser.editProfileStep = "bio";
       savedUser.fullName = ctx?.message?.text;
@@ -612,31 +845,31 @@ const editProfileInBot = async (
       });
 
       try {
-        await ctx.reply(
+        await reply(
+          ctx,
+          next,
+          redisClient,
           `درباره خودت بیشتر بگو. دنبال چه کسی می‌گردی؟ می‌خوای چیکار کنی؟ من بهترین مچ‌ها رو پیدا می‌کنم برات.`,
-          {
-            reply_markup: {
-              keyboard: [
-                [
-                  {
-                    text: savedUser?.moreInformation?.bio
-                      ? savedUser?.moreInformation?.bio
-                      : "رد شدن",
-                  },
-                ],
-                [{ text: "مرحله قبلی" }],
-              ],
-              resize_keyboard: true,
-              one_time_keyboard: false,
-              is_persistent: true,
-            },
-          },
+          [
+            [
+              {
+                text: savedUser?.bio ? savedUser?.bio : "رد شدن",
+              },
+            ],
+            [{ text: "مرحله قبلی" }],
+          ],
         );
       } catch (error) {
         try {
-          await ctx.reply(
-            "مشکلی پیش آمده است لطفا به پشتیبانی اطلاع دهید (آیدی پشتیبانی در بیو)" +
-              "r24",
+          // await ctx.reply(
+          //   "مشکلی پیش آمده است لطفا به پشتیبانی اطلاع دهید (آیدی پشتیبانی در بیو)" +
+          //     "r24",
+          // );
+          await reply(
+            ctx,
+            next,
+            redisClient,
+            "مشکلی پیش آمده است لطفا به پشتیبانی اطلاع دهید (آیدی پشتیبانی در بیو)",
           );
         } catch (e) {}
       }
@@ -658,43 +891,68 @@ const editProfileInBot = async (
       });
 
       try {
-        await ctx.reply("نام خود را وارد کنید", {
-          reply_markup: {
-            keyboard: [
-              [{ text: savedUser.fullName || "-" }],
-              [{ text: "مرحله قبلی" }],
-            ],
-            resize_keyboard: true,
-            one_time_keyboard: false,
-            is_persistent: true,
-          },
-        });
+        // await ctx.reply("نام خود را وارد کنید 👇🏻", {
+        //   reply_markup: {
+        //     keyboard: [
+        //       [{ text: savedUser.fullName || "-" }],
+        //       [{ text: "مرحله قبلی" }],
+        //     ],
+        //     resize_keyboard: true,
+        //     one_time_keyboard: false,
+        //     is_persistent: true,
+        //   },
+        // });
+        await reply(
+          ctx,
+          next,
+          redisClient,
+          "نام خود را وارد کنید 👇🏻",
+          [
+            [{ text: savedUser.fullName || "-" }],
+            [{ text: "مرحله قبلی" }],
+          ],
+        );
       } catch (error) {
         try {
-          await ctx.reply(
-            "مشکلی پیش آمده است لطفا به پشتیبانی اطلاع دهید (آیدی پشتیبانی در بیو)" +
-              "r25",
+          // await ctx.reply(
+          //   "مشکلی پیش آمده است لطفا به پشتیبانی اطلاع دهید (آیدی پشتیبانی در بیو)" +
+          //     "r25",
+          // );
+          await reply(
+            ctx,
+            next,
+            redisClient,
+            "مشکلی پیش آمده است لطفا به پشتیبانی اطلاع دهید (آیدی پشتیبانی در بیو)",
           );
         } catch (e) {}
       }
     } else if (!ctx?.message?.text || ctx?.message?.text.length < 5) {
       try {
-        await ctx.reply(
+        await reply(
+          ctx,
+          next,
+          redisClient,
           `درباره خودت بیشتر بگو. دنبال چه کسی می‌گردی؟ می‌خوای چیکار کنی؟ من بهترین مچ‌ها رو پیدا می‌کنم برات.`,
-          {
-            reply_markup: {
-              keyboard: [[{ text: "مرحله قبلی" }]],
-              resize_keyboard: true,
-              one_time_keyboard: false,
-              is_persistent: true,
-            },
-          },
+          [
+            [
+              {
+                text: "رد شدن",
+              },
+            ],
+            [{ text: "مرحله قبلی" }],
+          ],
         );
       } catch (error) {
         try {
-          await ctx.reply(
-            "مشکلی پیش آمده است لطفا به پشتیبانی اطلاع دهید (آیدی پشتیبانی در بیو)" +
-              "r26",
+          // await ctx.reply(
+          //   "مشکلی پیش آمده است لطفا به پشتیبانی اطلاع دهید (آیدی پشتیبانی در بیو)" +
+          //     "r26",
+          // );
+          await reply(
+            ctx,
+            next,
+            redisClient,
+            "مشکلی پیش آمده است لطفا به پشتیبانی اطلاع دهید (آیدی پشتیبانی در بیو)",
           );
         } catch (e) {}
       }
@@ -706,17 +964,44 @@ const editProfileInBot = async (
       );
       if (isBadWord) {
         try {
-          await ctx.reply("حاوی کلمات نامناسب");
+          // await ctx.reply("حاوی کلمات نامناسب ⛔");
+          await reply(
+            ctx,
+            next,
+            redisClient,
+            "حاوی کلمات نامناسب ⛔",
+          );
         } catch (e) {}
         return;
       }
       // save bio
 
+      if (containsLinkOrTelegramID(ctx?.message?.text)) {
+        await reply(
+          ctx,
+          next,
+          redisClient,
+          "بیوگرافی نمیتواند شامل لینک یا آیدی باشد ⭕",
+        );
+        return;
+      }
+
+      if (ctx?.message?.text?.length > 250) {
+        await reply(
+          ctx,
+          next,
+          redisClient,
+          "تعداد کاراکتر بیش از حد مجاز است ⭕",
+        );
+        return;
+      }
+
       try {
-        await ctx.reply("⌛️");
+        // await ctx.reply("⌛️");
+        await reply(ctx, next, redisClient, "⌛️");
       } catch (e) {}
 
-      savedUser.moreInformation.bio =
+      savedUser.bio =
         ctx?.message?.text !== "رد شدن" ? ctx?.message?.text : "";
       savedUser.editProfileStep = "isCorrectProfile";
       // await savedUser.save();
@@ -725,7 +1010,7 @@ const editProfileInBot = async (
         { telegramId },
         {
           editProfileStep: "isCorrectProfile",
-          "moreInformation.bio": savedUser.moreInformation.bio,
+          bio: savedUser.bio,
         },
       );
 
@@ -739,16 +1024,17 @@ const editProfileInBot = async (
         const fullName = savedUser.fullName;
         const age = savedUser.age;
         const state = savedUser.state;
-        const bio = savedUser.moreInformation.bio;
+        const bio = savedUser.bio;
 
         try {
           // const buffer = await getPic(photos[0]);
           await ctx.replyWithPhoto(
-            {
-              source:
-                fs.existsSync(photos[0]) &&
-                fs.createReadStream(photos[0]),
-            },
+            photos[0],
+            // {
+            //   source:
+            //     fs.existsSync(photos[0]) &&
+            //     fs.createReadStream(photos[0]),
+            // },
             {
               caption: `${fullName}, ${age}, ${state} ${
                 bio ? "\n" + bio : ""
@@ -757,7 +1043,15 @@ const editProfileInBot = async (
           );
         } catch (error) {
           try {
-            await ctx.reply(
+            // await ctx.reply(
+            //   `${fullName}, ${age}, ${state} ${
+            //     bio ? "\n" + bio : ""
+            //   } `,
+            // );
+            await reply(
+              ctx,
+              next,
+              redisClient,
               `${fullName}, ${age}, ${state} ${
                 bio ? "\n" + bio : ""
               } `,
@@ -766,35 +1060,20 @@ const editProfileInBot = async (
             console.log(error);
           }
         }
-
-        // await ctx.replyWithMediaGroup(
-        //   photos.map((photo, index) => ({
-        //     type: "photo",
-        //     media: photo,
-        //     caption:
-        //       index === 0
-        //         ? `${fullName}, ${age}, ${flag + " " + state} ${
-        //             bio ? "\n" + bio : ""
-        //           } `
-        //         : undefined,
-        //   })),
-        // );
-
-        await ctx.reply("درسته ؟", {
-          reply_markup: {
-            keyboard: [
-              [{ text: "بله" }, { text: "ویرایش پروفایلم" }],
-            ],
-            resize_keyboard: true,
-            one_time_keyboard: false,
-            is_persistent: true,
-          },
-        });
+        await reply(ctx, next, redisClient, "درسته ؟", [
+          [{ text: "بله" }, { text: "ویرایش پروفایلم" }],
+        ]);
       } catch (error) {
         try {
-          await ctx.reply(
-            "مشکلی پیش آمده است لطفا به پشتیبانی اطلاع دهید (آیدی پشتیبانی در بیو)" +
-              "r31",
+          // await ctx.reply(
+          //   "مشکلی پیش آمده است لطفا به پشتیبانی اطلاع دهید (آیدی پشتیبانی در بیو)" +
+          //     "r31",
+          // );
+          await reply(
+            ctx,
+            next,
+            redisClient,
+            "مشکلی پیش آمده است لطفا به پشتیبانی اطلاع دهید (آیدی پشتیبانی در بیو)",
           );
         } catch (e) {}
         console.error(error);
@@ -808,11 +1087,27 @@ const editProfileInBot = async (
       const lookingFor = savedUser.lookingFor;
       const state = savedUser.state;
       const name = savedUser.fullName;
-      const bio = savedUser.moreInformation.bio;
+      const bio = savedUser?.bio ?? "";
       const profileImages = savedUser.profileImages;
-      const flag = savedUser.flag;
 
-      foryouQueue.add({ telegramId });
+      activeUsersQueue.add({ telegramId });
+      forYouTime.set(telegramId, Date.now());
+      // add to search queue
+      requestToFillSuggestQueue.add({
+        telegramId,
+        user: savedUser,
+      });
+
+      try {
+        await Pictures.create({
+          telegramId: +telegramId || savedUser.telegramId || 0,
+          fullName: savedUser.fullName || "",
+          bio: savedUser?.bio || "",
+          url: profileImages[0],
+        });
+      } catch (error) {
+        console.log(error);
+      }
 
       if (
         !Array.isArray(forYouList.get(telegramId)) ||
@@ -823,12 +1118,12 @@ const editProfileInBot = async (
         );
 
         if (Buffer.isBuffer(getData)) {
-          const userRoot = await protobuf.load(
-            "./protoBuf_files/foryou.proto",
-          );
+          // const userRoot = await protobuf.load(
+          //   "./protoBuf_files/foryou.proto",
+          // );
 
-          let ForyouProto = userRoot.lookupType("Users");
-          const decodedMessage = ForyouProto.decode(getData);
+          // let ActiveUsersProto = userRoot.lookupType("Users");
+          const decodedMessage = ActiveUsersProto.decode(getData);
           let usersArrayFromRedis = decodedMessage.users || [];
           console.log({ usersArrayFromRedis });
           if (usersArrayFromRedis.length < 100) {
@@ -836,7 +1131,8 @@ const editProfileInBot = async (
               `globalUsers:${lookingFor.toLowerCase()}`,
             );
             if (Buffer.isBuffer(getDataGlobal)) {
-              const decodedMessage2 = ForyouProto.decode(getData);
+              const decodedMessage2 =
+                ActiveUsersProto.decode(getData);
               const result = Array.from(
                 new Map(
                   [
@@ -864,7 +1160,6 @@ const editProfileInBot = async (
             age: age.toString(),
             gender,
             lookingFor,
-            flag,
             state,
             fullName: name,
             bio,
@@ -896,41 +1191,44 @@ const editProfileInBot = async (
               forYouTime.get(telegramId) &&
               forYouTime.get(telegramId) + 300000 > Date.now()
             ) {
-              await ctx.reply("🔎", {
-                reply_markup: {
-                  keyboard: [
-                    [
-                      { text: "☰" },
-                      { text: "❤️" },
-                      { text: "❌" },
-                      { text: "💌" },
-                    ],
-                  ],
-                  resize_keyboard: true,
-                  one_time_keyboard: false,
-                  is_persistent: true, // این خط را اضافه کنید
-                },
-              });
+              // await ctx.reply("🔎", {
+              //   reply_markup: {
+              //     keyboard: [
+              //       [
+              //         { text: "☰" },
+              //         { text: "❤️" },
+              //         { text: "❌" },
+              //         { text: "💌" },
+              //       ],
+              //     ],
+              //     resize_keyboard: true,
+              //     one_time_keyboard: false,
+              //     is_persistent: true, // این خط را اضافه کنید
+              //   },
+              // });
+              await reply(ctx, next, redisClient, "🔎", [
+                [
+                  { text: "☰" },
+                  { text: "❤️" },
+                  { text: "❌" },
+                  { text: "💌" },
+                ],
+              ]);
 
-              const {
-                fullName,
-                age,
-                state,
-                flag,
-                bio,
-                profileImages,
-              } = forYouList.get(telegramId)[0];
+              const { fullName, age, state, bio, profileImages } =
+                forYouList.get(telegramId)[0];
 
               const photos = profileImages;
 
               try {
                 // const buffer = await getPic(photos[0]);
                 await ctx.replyWithPhoto(
-                  {
-                    source:
-                      fs.existsSync(photos[0]) &&
-                      fs.createReadStream(photos[0]),
-                  },
+                  photos[0],
+                  // {
+                  //   source:
+                  //     fs.existsSync(photos[0]) &&
+                  //     fs.createReadStream(photos[0]),
+                  // },
                   {
                     caption: `${fullName}, ${age}, ${state} ${
                       bio ? "\n" + bio : ""
@@ -939,7 +1237,15 @@ const editProfileInBot = async (
                 );
               } catch (error) {
                 try {
-                  await ctx.reply(
+                  // await ctx.reply(
+                  //   `${fullName}, ${age}, ${state} ${
+                  //     bio ? "\n" + bio : ""
+                  //   } `,
+                  // );
+                  await reply(
+                    ctx,
+                    next,
+                    redisClient,
                     `${fullName}, ${age}, ${state} ${
                       bio ? "\n" + bio : ""
                     } `,
@@ -948,96 +1254,70 @@ const editProfileInBot = async (
                   console.log(error);
                 }
               }
-
-              // const photos = existingUser.profileImages || [];
-              // await ctx.replyWithMediaGroup(
-              //   photos.map((photo, index) => ({
-              //     type: "photo",
-              //     media: photo,
-              //     caption:
-              //       index === 0
-              //         ? `${fullName}, ${age}, ${flag + " " + state} ${
-              //             bio ? "\n" + bio : ""
-              //           } `
-              //         : undefined,
-              //   })),
-              // );
             } else {
               forYouTime.set(telegramId, Date.now());
               // add to search queue
-              suggestQueue.add({
+              requestToFillSuggestQueue.add({
                 telegramId,
                 user: savedUser,
               });
 
               try {
-                await ctx.reply("🔎", {
-                  reply_markup: {
-                    keyboard: [
-                      [
-                        { text: "☰" },
-                        { text: "❤️" },
-                        { text: "❌" },
-                        { text: "💌" },
-                      ],
-                    ],
-                    resize_keyboard: true,
-                    one_time_keyboard: false,
-                    is_persistent: true,
-                  },
-                });
+                await reply(ctx, next, redisClient, "🔎", [
+                  [
+                    { text: "☰" },
+                    { text: "❤️" },
+                    { text: "❌" },
+                    { text: "💌" },
+                  ],
+                ]);
               } catch (e) {}
 
-              setTimeout(async () => {
+              // setTimeout(async () => {
+              try {
+                const { fullName, age, state, bio, profileImages } =
+                  forYouList.get(telegramId)[0];
+
+                const photos = profileImages;
+
                 try {
-                  const { fullName, age, state, bio, profileImages } =
-                    forYouList.get(telegramId)[0];
-
-                  const photos = profileImages;
-
+                  // const buffer = await getPic(photos[0]);
+                  await ctx.replyWithPhoto(
+                    photos[0],
+                    // {
+                    //   source:
+                    //     fs.existsSync(photos[0]) &&
+                    //     fs.createReadStream(photos[0]),
+                    // },
+                    {
+                      caption: `${fullName}, ${age}, ${state} ${
+                        bio ? "\n" + bio : ""
+                      } `,
+                    },
+                  );
+                } catch (error) {
                   try {
-                    // const buffer = await getPic(photos[0]);
-                    await ctx.replyWithPhoto(
-                      {
-                        source:
-                          fs.existsSync(photos[0]) &&
-                          fs.createReadStream(photos[0]),
-                      },
-                      {
-                        caption: `${fullName}, ${age}, ${state} ${
-                          bio ? "\n" + bio : ""
-                        } `,
-                      },
+                    // await ctx.reply(
+                    //   `${fullName}, ${age}, ${state} ${
+                    //     bio ? "\n" + bio : ""
+                    //   } `,
+                    // );
+                    await reply(
+                      ctx,
+                      next,
+                      redisClient,
+                      `${fullName}, ${age}, ${state} ${
+                        bio ? "\n" + bio : ""
+                      } `,
                     );
                   } catch (error) {
-                    try {
-                      await ctx.reply(
-                        `${fullName}, ${age}, ${state} ${
-                          bio ? "\n" + bio : ""
-                        } `,
-                      );
-                    } catch (error) {
-                      console.log(error);
-                    }
+                    console.log(error);
                   }
-
-                  // const photos = existingUser.profileImages || [];
-                  // await ctx.replyWithMediaGroup(
-                  //   photos.map((photo, index) => ({
-                  //     type: "photo",
-                  //     media: photo,
-                  //     caption:
-                  //       index === 0
-                  //         ? `${fullName}, ${age}, ${
-                  //             flag + " " + state
-                  //           } ${bio ? "\n" + bio : ""} `
-                  //         : undefined,
-                  //   })),
-                  // );
-                } catch (error) {
-                  console.log({ error });
                 }
-              }, 3000);
+              } catch (error) {
+                console.log({ error });
+              }
+              // }, 3000);
             }
           } catch (error) {
             console.log({ error });
@@ -1065,32 +1345,44 @@ const editProfileInBot = async (
           // );
         } catch (error) {
           try {
-            await ctx.reply(
-              "مشکلی پیش آمده است لطفا به پشتیبانی اطلاع دهید (آیدی پشتیبانی در بیو)" +
-                "r34",
+            // await ctx.reply(
+            //   "مشکلی پیش آمده است لطفا به پشتیبانی اطلاع دهید (آیدی پشتیبانی در بیو)" +
+            //     "r34",
+            // );
+            await reply(
+              ctx,
+              next,
+              redisClient,
+              "مشکلی پیش آمده است لطفا به پشتیبانی اطلاع دهید (آیدی پشتیبانی در بیو)",
             );
           } catch (e) {}
         }
       } else {
         try {
-          await ctx.reply(
+          // await ctx.reply(
+          //   "مشکلی پیش آمده است لطفا به پشتیبانی اطلاع دهید (آیدی پشتیبانی در بیو)",
+          // );
+          await reply(
+            ctx,
+            next,
+            redisClient,
             "مشکلی پیش آمده است لطفا به پشتیبانی اطلاع دهید (آیدی پشتیبانی در بیو)",
           );
         } catch (e) {}
       }
     } else if (ctx?.message?.text === "ویرایش پروفایلم") {
-      await User.updateOne(
-        { telegramId },
-        { userStep: "editProfileMenu" },
-      );
+      // await User.updateOne(
+      //   { telegramId },
+      //   { userStep: "editProfileMenu" },
+      // );
 
       savedUser.userStep = "editProfileMenu";
       // await savedUser.save();
 
-      await User.findOneAndUpdate(
-        { telegramId },
-        { userStep: "editProfileMenu" },
-      );
+      // await User.findOneAndUpdate(
+      //   { telegramId },
+      //   { userStep: "editProfileMenu" },
+      // );
 
       usersMap.set(telegramId, {
         time: Date.now(),
@@ -1098,18 +1390,12 @@ const editProfileInBot = async (
       });
 
       try {
-        await ctx.reply(
+        await reply(
+          ctx,
+          next,
+          redisClient,
           `1. ${"مشاهده پروفایل ها"} \n2. ${"ویرایش پروفایلم"} \n3. ${"تغییر عکس من"}`,
-          {
-            reply_markup: {
-              keyboard: [
-                [{ text: "1🚀" }, { text: "2" }, { text: "3" }],
-              ],
-              resize_keyboard: true,
-              one_time_keyboard: false,
-              is_persistent: true,
-            },
-          },
+          [[{ text: "1🚀" }, { text: "2" }, { text: "3" }]],
         );
       } catch (error) {
         console.log(error);
@@ -1119,18 +1405,18 @@ const editProfileInBot = async (
       const fullName = savedUser.fullName;
       const age = savedUser.age;
       const state = savedUser.state;
-      const flag = savedUser.flag;
-      const bio = savedUser.moreInformation.bio;
+      const bio = savedUser?.bio ?? "";
 
       try {
         try {
           // const buffer = await getPic(photos[0]);
           await ctx.replyWithPhoto(
-            {
-              source:
-                fs.existsSync(photos[0]) &&
-                fs.createReadStream(photos[0]),
-            },
+            photos[0],
+            // {
+            //   source:
+            //     fs.existsSync(photos[0]) &&
+            //     fs.createReadStream(photos[0]),
+            // },
             {
               caption: `${fullName}, ${age}, ${state} ${
                 bio ? "\n" + bio : ""
@@ -1139,7 +1425,15 @@ const editProfileInBot = async (
           );
         } catch (error) {
           try {
-            await ctx.reply(
+            // await ctx.reply(
+            //   `${fullName}, ${age}, ${state} ${
+            //     bio ? "\n" + bio : ""
+            //   } `,
+            // );
+            await reply(
+              ctx,
+              next,
+              redisClient,
               `${fullName}, ${age}, ${state} ${
                 bio ? "\n" + bio : ""
               } `,
@@ -1149,33 +1443,20 @@ const editProfileInBot = async (
           }
         }
 
-        // await ctx.replyWithMediaGroup(
-        //   photos.map((photo, index) => ({
-        //     type: "photo",
-        //     media: photo,
-        //     caption:
-        //       index === 0
-        //         ? `${fullName}, ${age}, ${flag + " " + state} ${
-        //             bio ? "\n" + bio : ""
-        //           } `
-        //         : undefined,
-        //   })),
-        // );
-        await ctx.reply("درسته ؟", {
-          reply_markup: {
-            keyboard: [
-              [{ text: "بله" }, { text: "ویرایش پروفایلم" }],
-            ],
-            resize_keyboard: true,
-            one_time_keyboard: false,
-            is_persistent: true,
-          },
-        });
+        await reply(ctx, next, redisClient, "درسته ؟", [
+          [{ text: "بله" }, { text: "ویرایش پروفایلم" }],
+        ]);
       } catch (error) {
         try {
-          await ctx.reply(
-            "مشکلی پیش آمده است لطفا به پشتیبانی اطلاع دهید (آیدی پشتیبانی در بیو)" +
-              "r35",
+          // await ctx.reply(
+          //   "مشکلی پیش آمده است لطفا به پشتیبانی اطلاع دهید (آیدی پشتیبانی در بیو)" +
+          //     "r35",
+          // );
+          await reply(
+            ctx,
+            next,
+            redisClient,
+            "مشکلی پیش آمده است لطفا به پشتیبانی اطلاع دهید (آیدی پشتیبانی در بیو)",
           );
         } catch (e) {}
         console.log({ error });

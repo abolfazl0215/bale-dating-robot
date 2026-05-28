@@ -10,14 +10,14 @@ messageToAllQueue.process(async (job) => {
   const { telegramId, text } = job.data;
 
   try {
-    console.log({ telegramId });
+    // console.log({ telegramId });
     await bot.telegram.sendMessage(telegramId, text, {
       reply_markup: {
         inline_keyboard: [
           [
             {
               text: "شروع",
-              url: "https://ble.ir/pounes_dating_bot?start",
+              url: "https://ble.ir/pounesbot?start",
             },
           ],
         ],

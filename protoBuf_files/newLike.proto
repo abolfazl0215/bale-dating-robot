@@ -1,5 +1,5 @@
 syntax = "proto3";
-package com.abolfazlMokhtari.pounes.proto;
+package com.abolfazl021mokhtaritari.pounes.proto;
 
 message Users {
    repeated User users = 1;
@@ -8,6 +8,7 @@ message Users {
 message User {
   int64 telegramId = 1;
   repeated Liker likers = 2;
+  int64 time = 3;
 }
 
 message Liker {
@@ -19,19 +20,11 @@ message Liker {
   string gender = 6;
   string lookingFor = 7;
   string state = 8;
-  int64 lastSeen = 9;
-  int64 lastUpdate = 10;
-  bool sleep = 11;
-  string education = 12;
-  string dietaryPreference = 13;
-  string job = 14;
-  string workout = 15;
-  string sleepingHabits = 16;
-  string pets = 17;
-  string bio = 18;
-  repeated string profileImages = 19;
-  string inviteCode = 20;
-  
+  bool sleep = 9;
+  string bio = 10;
+  repeated string profileImages = 11;
+  string inviteCode = 12;
+  string message = 13;
 }
 
 

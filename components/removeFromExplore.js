@@ -1,12 +1,12 @@
 const User = require("../models/User");
 const protobuf = require("protobufjs");
 
-const removeFromExplore = async (telegramId, redisClient) => {
+const removeFromExplore = async (telegramId, redisClient,ActiveUsersProto) => {
   try {
-    const userRoot = await protobuf.load(
-      "./protoBuf_files/foryou.proto",
-    );
-    let ForyouProto = userRoot.lookupType("Users");
+    // const userRoot = await protobuf.load(
+    //   "./protoBuf_files/foryou.proto",
+    // );
+    // let ActiveUsersProto = userRoot.lookupType("Users");
 
     const findUser = await User.findOne({ telegramId });
 
@@ -37,7 +37,7 @@ const removeFromExplore = async (telegramId, redisClient) => {
         }
 
         try {
-          const decodeBuffer = ForyouProto.decode(getData);
+          const decodeBuffer = ActiveUsersProto.decode(getData);
 
           // فیلتر کردن کاربر از لیست
           const filteredUsers = decodeBuffer.users.filter(
@@ -51,17 +51,17 @@ const removeFromExplore = async (telegramId, redisClient) => {
           }
 
           // اعتبارسنجی داده‌ها
-          const errMsg = ForyouProto.verify({ users: filteredUsers });
+          const errMsg = ActiveUsersProto.verify({ users: filteredUsers });
           if (errMsg) {
             console.error("Protobuf validation error:", errMsg);
             return;
           }
 
           // تبدیل به protobuf و ذخیره در ردیس
-          const message_ = ForyouProto.create({
+          const message_ = ActiveUsersProto.create({
             users: filteredUsers,
           });
-          const buffer = ForyouProto.encode(message_).finish();
+          const buffer = ActiveUsersProto.encode(message_).finish();
           await redisClient.set(redisKey, buffer);
 
           console.log(`User ${telegramId} removed from ${keyType}`);

@@ -1,16 +1,19 @@
 const fs = require("fs");
 const User = require("../../models/User");
 const { getPic } = require("../../utils/getPic");
+const { reply } = require("../../telegram_methods/reply");
+const { requestToFillSuggestQueue } = require("../../config/redis");
 
 const menuStep = async (
   ctx,
+  next,
   existingUser,
   usersMap,
   forYouList,
   forYouTime,
   telegramId,
   generateInviteLink,
-  suggestQueue,
+  redisClient,
 ) => {
   if (ctx?.message?.text === "1 🚀") {
     try {
@@ -26,21 +29,29 @@ const menuStep = async (
         forYouTime.get(telegramId) &&
         forYouTime.get(telegramId) + 600000 > Date.now()
       ) {
-        await ctx.reply("🔎", {
-          reply_markup: {
-            keyboard: [
-              [
-                { text: "☰" },
-                { text: "❤️" },
-                { text: "❌" },
-                { text: "💌" },
-              ],
-            ],
-            resize_keyboard: true,
-            one_time_keyboard: false,
-            is_persistent: true, // این خط را اضافه کنید
-          },
-        });
+        // await ctx.reply("🔎", {
+        //   reply_markup: {
+        //     keyboard: [
+        //       [
+        //         { text: "☰" },
+        //         { text: "❤️" },
+        //         { text: "❌" },
+        //         { text: "💌" },
+        //       ],
+        //     ],
+        //     resize_keyboard: true,
+        //     one_time_keyboard: false,
+        //     is_persistent: true, // این خط را اضافه کنید
+        //   },
+        // });
+        await reply(ctx, next, redisClient, "🔎", [
+          [
+            { text: "☰" },
+            { text: "❤️" },
+            { text: "❌" },
+            { text: "💌" },
+          ],
+        ]);
 
         const {
           fullName,
@@ -56,11 +67,12 @@ const menuStep = async (
         try {
           // const buffer = await getPic(photos[0]);
           await ctx.replyWithPhoto(
-            {
-              source:
-                fs.existsSync(photos[0]) &&
-                fs.createReadStream(photos[0]),
-            },
+            photos[0],
+            // {
+            //   source:
+            //     fs.existsSync(photos[0]) &&
+            //     fs.createReadStream(photos[0]),
+            // },
             {
               caption: `${fullName}, ${age}, ${state} ${
                 bio ? "\n" + bio : ""
@@ -69,7 +81,15 @@ const menuStep = async (
           );
         } catch (error) {
           try {
-            await ctx.reply(
+            // await ctx.reply(
+            //   `${fullName}, ${age}, ${state} ${
+            //     bio ? "\n" + bio : ""
+            //   } \n/user_${inviteCode_from_forYouList || "not_found"}`,
+            // );
+            await reply(
+              ctx,
+              next,
+              redisClient,
               `${fullName}, ${age}, ${state} ${
                 bio ? "\n" + bio : ""
               } \n/user_${inviteCode_from_forYouList || "not_found"}`,
@@ -88,7 +108,7 @@ const menuStep = async (
       } else {
         forYouTime.set(telegramId, Date.now());
         // add to search queue
-        suggestQueue.add({
+        requestToFillSuggestQueue.add({
           telegramId,
           user: existingUser,
         });
@@ -104,31 +124,41 @@ const menuStep = async (
             inviteCode: inviteCode_from_forYouList,
           } = forYouList.get(telegramId)[0];
 
-          await ctx.reply("🔎", {
-            reply_markup: {
-              keyboard: [
-                [
-                  { text: "☰" },
-                  { text: "❤️" },
-                  { text: "❌" },
-                  { text: "💌" },
-                ],
-              ],
-              resize_keyboard: true,
-              is_persistent: true, // این خط را اضافه کنید
-            },
-          });
+          // await ctx.reply("🔎", {
+          //   reply_markup: {
+          //     keyboard: [
+          //       [
+          //         { text: "☰" },
+          //         { text: "❤️" },
+          //         { text: "❌" },
+          //         { text: "💌" },
+          //       ],
+          //     ],
+          //     resize_keyboard: true,
+          //     is_persistent: true, // این خط را اضافه کنید
+          //   },
+          // });
+          await reply(ctx, next, redisClient, "🔎", [
+            [
+              { text: "☰" },
+              { text: "❤️" },
+              { text: "❌" },
+              { text: "💌" },
+            ],
+          ]);
+
           const photos = profileImages;
           // console.log({ photos2: photos });
 
           try {
             // const buffer = await getPic(photos[0]);
             await ctx.replyWithPhoto(
-              {
-                source:
-                  fs.existsSync(photos[0]) &&
-                  fs.createReadStream(photos[0]),
-              },
+              photos[0],
+              // {
+              //   source:
+              //     fs.existsSync(photos[0]) &&
+              //     fs.createReadStream(photos[0]),
+              // },
               {
                 caption: `${fullName}, ${age}, ${state} ${
                   bio ? "\n" + bio : ""
@@ -137,7 +167,15 @@ const menuStep = async (
             );
           } catch (error) {
             try {
-              await ctx.reply(
+              // await ctx.reply(
+              //   `${fullName}, ${age}, ${state} ${
+              //     bio ? "\n" + bio : ""
+              //   } \n/user_${inviteCode_from_forYouList || "not_found"}`,
+              // );
+              await reply(
+                ctx,
+                next,
+                redisClient,
                 `${fullName}, ${age}, ${state} ${
                   bio ? "\n" + bio : ""
                 } \n/user_${inviteCode_from_forYouList || "not_found"}`,
@@ -167,7 +205,7 @@ const menuStep = async (
       const fullName = existingUser.fullName;
       const age = existingUser.age;
       const state = existingUser.state;
-      const bio = existingUser.moreInformation.bio;
+      const bio = existingUser?.bio ?? "";
       const inviteCode = existingUser.inviteCode;
 
       // console.log({ photos3: photos });
@@ -175,11 +213,12 @@ const menuStep = async (
       try {
         // const buffer = await getPic(photos[0]);
         await ctx.replyWithPhoto(
-          {
-            source:
-              fs.existsSync(photos[0]) &&
-              fs.createReadStream(photos[0]),
-          },
+          photos[0],
+          // {
+          //   source:
+          //     fs.existsSync(photos[0]) &&
+          //     fs.createReadStream(photos[0]),
+          // },
           {
             caption: `${fullName}, ${age}, ${state} ${
               bio ? "\n" + bio : ""
@@ -188,7 +227,15 @@ const menuStep = async (
         );
       } catch (error) {
         try {
-          await ctx.reply(
+          // await ctx.reply(
+          //   `${fullName}, ${age}, ${state} ${
+          //     bio ? "\n" + bio : ""
+          //   } \n/user_${inviteCode || "not_found"}`,
+          // );
+          await reply(
+            ctx,
+            next,
+            redisClient,
             `${fullName}, ${age}, ${state} ${
               bio ? "\n" + bio : ""
             } \n/user_${inviteCode || "not_found"}`,
@@ -210,18 +257,13 @@ const menuStep = async (
         user: existingUser,
       });
 
-      await ctx.reply(
+
+      await reply(
+        ctx,
+        next,
+        redisClient,
         `1. ${"مشاهده پروفایل ها"} \n2. ${"ویرایش پروفایلم"} \n3. ${"تغییر عکس من"}`,
-        {
-          reply_markup: {
-            keyboard: [
-              [{ text: "1🚀" }, { text: "2" }, { text: "3" }],
-            ],
-            resize_keyboard: true,
-            one_time_keyboard: false,
-            is_persistent: true,
-          },
-        },
+        [[{ text: "1🚀" }, { text: "2" }, { text: "3" }]],
       );
     } catch (error) {
       console.log({ error });
@@ -235,25 +277,41 @@ const menuStep = async (
         user: existingUser,
       });
 
-      await ctx.reply(
+      // await ctx.reply(
+      //   `${"حالت خواب"}: ${
+      //     existingUser.sleep ? "فعال" : "غیرفعال"
+      //   }\n\n${"اگر حالت خواب فعال باشد ، لایکی دریافت نمیکنید"}`,
+      //   {
+      //     reply_markup: {
+      //       keyboard: [
+      //         [
+      //           {
+      //             text: existingUser.sleep ? "غیرفعال" : "فعال",
+      //           },
+      //         ],
+      //         [{ text: "بازگشت" }],
+      //       ],
+      //       resize_keyboard: true,
+      //       one_time_keyboard: false,
+      //       is_persistent: true,
+      //     },
+      //   },
+      // );
+      await reply(
+        ctx,
+        next,
+        redisClient,
         `${"حالت خواب"}: ${
           existingUser.sleep ? "فعال" : "غیرفعال"
         }\n\n${"اگر حالت خواب فعال باشد ، لایکی دریافت نمیکنید"}`,
-        {
-          reply_markup: {
-            keyboard: [
-              [
-                {
-                  text: existingUser.sleep ? "غیرفعال" : "فعال",
-                },
-              ],
-              [{ text: "بازگشت" }],
-            ],
-            resize_keyboard: true,
-            one_time_keyboard: false,
-            is_persistent: true,
-          },
-        },
+        [
+          [
+            {
+              text: existingUser.sleep ? "غیرفعال" : "فعال",
+            },
+          ],
+          [{ text: "بازگشت" }],
+        ],
       );
     } catch (error) {
       console.log(error);
@@ -265,23 +323,31 @@ const menuStep = async (
         time: Date.now(),
         user: existingUser,
       });
-      await ctx.reply(
+      // await ctx.reply(
+      //   "دوستان خود را دعوت کنید تا لایک های بیشتری دریافت کنید!\n\nبا دوستان خود یا در شبکه های اجتماعی خود به اشتراک گذاری کنید!\nلینک شخصی شما 👇🏽",
+      //   {
+      //     reply_markup: {
+      //       keyboard: [[{ text: "بازگشت" }]],
+      //       resize_keyboard: true,
+      //       one_time_keyboard: false,
+      //       is_persistent: true,
+      //     },
+      //   },
+      // );
+      await reply(
+        ctx,
+        next,
+        redisClient,
         "دوستان خود را دعوت کنید تا لایک های بیشتری دریافت کنید!\n\nبا دوستان خود یا در شبکه های اجتماعی خود به اشتراک گذاری کنید!\nلینک شخصی شما 👇🏽",
-        {
-          reply_markup: {
-            keyboard: [[{ text: "بازگشت" }]],
-            resize_keyboard: true,
-            one_time_keyboard: false,
-            is_persistent: true,
-          },
-        },
+        [[{ text: "بازگشت" }]],
       );
       const shareText =
         "ربات دوستیابی پونس 🔥 در بله است! یک دوست جدید یا حتی یک عاشق پیدا کنید 👫" +
         "\n👉🏻 " +
         generateInviteLink(telegramId);
 
-      await ctx.reply(shareText);
+      // await ctx.reply(shareText);
+      await reply(ctx, next, redisClient, shareText);
     } catch (error) {
       console.log(error);
     }
@@ -289,23 +355,38 @@ const menuStep = async (
     return;
   } else {
     try {
-      await ctx.reply(
+      // await ctx.reply(
+      //   `1. ${"مشاهده پروفایل ها"}\n2. ${"پروفایل من"}\n3. ${"حالت خواب"}\n----------------------------\n4. ${"دوستان خود را دعوت کنید تا لایک های بیشتری دریافت کنید 😎"}`,
+      //   {
+      //     reply_markup: {
+      //       keyboard: [
+      //         [
+      //           { text: "1 🚀" },
+      //           { text: "2" },
+      //           { text: "3" },
+      //           { text: "4" },
+      //           //{ text: "5" },
+      //         ],
+      //       ],
+      //       resize_keyboard: true,
+      //       is_persistent: true,
+      //     },
+      //   },
+      // );
+      await reply(
+        ctx,
+        next,
+        redisClient,
         `1. ${"مشاهده پروفایل ها"}\n2. ${"پروفایل من"}\n3. ${"حالت خواب"}\n----------------------------\n4. ${"دوستان خود را دعوت کنید تا لایک های بیشتری دریافت کنید 😎"}`,
-        {
-          reply_markup: {
-            keyboard: [
-              [
-                { text: "1 🚀" },
-                { text: "2" },
-                { text: "3" },
-                { text: "4" },
-                //{ text: "5" },
-              ],
-            ],
-            resize_keyboard: true,
-            is_persistent: true,
-          },
-        },
+        [
+          [
+            { text: "1 🚀" },
+            { text: "2" },
+            { text: "3" },
+            { text: "4" },
+            //{ text: "5" },
+          ],
+        ],
       );
     } catch (error) {
       console.log({ error });

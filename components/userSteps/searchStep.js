@@ -4,6 +4,8 @@ const {
 
 const searchStep = async (
   ctx,
+  next,
+  redisClient,
   telegramId,
   existingUser,
   usersMap,
@@ -29,10 +31,16 @@ const searchStep = async (
         });
       } else {
         try {
-          await ctx.reply(
+          // await ctx.reply(
+          //   "⚠️  شما فقط تعداد محدودی لایک در روز می‌توانید داشته باشید. برای لایک بیشتر دوستان خود را دعوت کنید و 100 لایک هدیه بگیرید.",
+          // );
+          await reply(
+            ctx,
+            next,
+            redisClient,
             "⚠️  شما فقط تعداد محدودی لایک در روز می‌توانید داشته باشید. برای لایک بیشتر دوستان خود را دعوت کنید و 100 لایک هدیه بگیرید.",
           );
-          const inviteLink = `https://ble.ir/pounes_dating_bot?start=${generateInviteCode(
+          const inviteLink = `https://ble.ir/pounesbot?start=${generateInviteCode(
             +telegramId,
           )}`;
           const shareText =
@@ -40,7 +48,8 @@ const searchStep = async (
             "\n👉🏻 " +
             inviteLink;
 
-          await ctx.reply(shareText);
+          // await ctx.reply(shareText);
+          await reply(ctx, next, redisClient, shareText);
         } catch (error) {
           console.log(error);
         }

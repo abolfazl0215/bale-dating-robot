@@ -8,4 +8,5 @@ function chunkArray(array, size) {
   return result;
 }
 
+
 module.exports = chunkArray;

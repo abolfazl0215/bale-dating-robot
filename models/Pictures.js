@@ -2,7 +2,7 @@
 const mongoose = require("mongoose");
 const picturesSchema = new mongoose.Schema({
   telegramId: { type: Number },
-  url: { type: String, unique: true },
+  url: { type: String },
   fullName: String,
   bio: String,
   confirm: { type: Boolean, default: false },

@@ -1,93 +1,186 @@
-const fs = require("fs");
-const path = require("path");
 const axios = require("axios");
-const sharp = require("sharp");
-const { v4: uuidv4 } = require("uuid");
+const FormData = require("form-data");
+const path = require("path");
+const stream = require("stream"); // ماژول stream را اضافه کنید
 
-const uploadImageFromUrl = async (imageUrl, options = {}) => {
-  // ۱. تعیین نام فایل و مسیر ذخیره‌سازی
-  const fileName = `${Date.now()}-${uuidv4()}.jpg`;
-  const uploadDir = path.join(__dirname, "..", "public", "uploads"); // مسیر پوشه آپلود
-  const filePath = path.join(uploadDir, fileName);
-
-  // ایجاد پوشه اگر وجود نداشته باشد
-  if (!fs.existsSync(uploadDir)) {
-    fs.mkdirSync(uploadDir, { recursive: true });
-  }
-
-  // تنظیمات پیش‌فرض برای فشردگی
-  const defaultOptions = {
-    quality: 80,
-    width: 800,
-    height: 800,
-    format: "jpeg",
-  };
-
-  const config = { ...defaultOptions, ...options };
+async function uploadImageFromUrl(fileLink) {
+  let responseStream; // برای نگهداری stream دانلود
 
   try {
-    // console.log({ imageUrl });
-    // ۲. دانلود تصویر به صورت باینری
-    const response = await axios.get(imageUrl, {
-      responseType: "arraybuffer",
+    // 1. دانلود تصویر از تلگرام به صورت Stream
+    const telegramResponse = await axios.get(fileLink, {
+      responseType: "stream", // <-- تغییر مهم: دریافت به صورت stream
       timeout: 20000,
       headers: {
-        // اگر از نوع Bearer پشتیبانی می‌کند:
         Authorization: `Bearer 890588018:8B58TpZfCWe5lZw3KPPgWChNgRxrUW0DIbg`,
         Accept: "application/octet-stream,*/*",
       },
-      validateStatus: () => true, // برای دیباگ: حتی اگر 404/500 شد، جواب را چاپ کنیم
+      // validateStatus: () => true, // این برای streamها معمولاً لازم نیست
     });
 
-    // console.log("status:", response.status);
-    // console.log("headers:", response.headers);
-    // console.log(
-    //   "body head:",
-    //   Buffer.from(response.data).slice(0, 200).toString("utf8"),
-    // );
+    responseStream = telegramResponse.data; // Stream دانلود شده
 
-    // ۳. پردازش و فشردگی با Sharp
+    // console.log("Downloaded stream successfully");
 
-    console.time("compress");
-    const compressedImageBuffer = await sharp(
-      Buffer.from(response.data),
-    )
-      .resize({
-        width: config.width,
-        height: config.height,
-        fit: "inside",
-        withoutEnlargement: true,
-      })
-      .jpeg({
-        quality: config.quality,
-        progressive: true,
-        mozjpeg: true,
-      })
-      .toBuffer();
-    console.timeEnd("compress");
+    const form = new FormData();
+    const fileName = `image-${Date.now()}.jpg`;
 
-    // ۴. ذخیره فایل در سیستم با استفاده از fs
-    fs.writeFileSync(filePath, compressedImageBuffer);
-    // console.log(`File saved to: ${filePath}`);
+    // 2. اضافه کردن Stream فایل به FormData بدون بارگذاری در حافظه
+    form.append("image", responseStream, {
+      // responseStream را مستقیماً به form.append اضافه می‌کنیم
+      filename: fileName,
+      contentType: "image/jpeg", // صراحتاً می‌گوییم فایل تصویر است
+    });
 
-    // ۵. بازگرداندن لینک مستقیم (فرض بر این است که سرور شما روی پورت مثلاً ۳۰۰۰ است)
-    // اگر از اکسپرس استفاده می‌کنید، باید پوشه public را استاتیک کنید
-    // مثال: app.use(express.static('public'));
-    const publicUrl = `./public/uploads/${fileName}`;
+    // 3. ارسال به سرور آپلود
+    // برای ارسال stream، نیاز به یک pipeline یا استفاده از axios با configuration مناسب داریم
+    // Axios خودش می‌تواند stream را پردازش کند اگر در body قرار گیرد.
+    const uploadResponse = await axios.post(
+      "https://pounes.ir/upload-image",
+      form, // FormData که شامل stream است
+      {
+        headers: {
+          ...form.getHeaders(), // headers مربوط به FormData
+        },
+        timeout: 50000,
+        // maxBodyLength و maxContentLength لازم نیستند چون stream اندازه مشخصی ندارد
+        // ولی اگر سرور شما محدودیت دارد، می‌توانید اضافه کنید
+        maxBodyLength: Infinity,
+        maxContentLength: Infinity,
+        onUploadProgress: (progressEvent) => {
+          // می‌توانید اینجا پیشرفت آپلود را نمایش دهید (اختیاری)
+          // console.log(`Upload progress: ${Math.round((progressEvent.loaded * 100) / progressEvent.total)}%`);
+        },
+      },
+    );
 
-    // اگر می‌خواهید آدرس کامل با دامنه برگردانده شود:
-    // const fullUrl = `https://yourdomain.com/${publicUrl}`;
+    // console.log("Upload response received:", uploadResponse.data);
 
-    return publicUrl;
+    // 4. اطمینان از اتمام خواندن stream (مهم برای جلوگیری از hang شدن)
+    // برخی مواقع لازم است stream را pipe کنیم تا مطمئن شویم کامل خوانده شده
+    // اما axios معمولاً این کار را خودش انجام می‌دهد.
+    // اگر باز هم مشکل بود، می‌توانید از stream.pipeline استفاده کنید.
+
+    return uploadResponse.data.url;
   } catch (error) {
-    console.error("خطا در پردازش و ذخیره تصویر:", error.message);
-    throw error;
+    console.error(
+      "خطا در uploadImageFromUrl:",
+      error.response?.data || error.message,
+    );
+    // مهم: اگر هنگام دانلود steam با خطا مواجه شدیم، باید stream را ببندیم
+    if (responseStream && responseStream.destroy) {
+      responseStream.destroy();
+    }
+    // throw error; // خطا را دوباره پرتاب کن تا در سطح بالاتر مدیریت شود
   }
-};
+}
 
 module.exports = {
   uploadImageFromUrl,
 };
+
+// ////////////////////////////////////////////////////////////
+// ////////////////////////////////////////////////////////////
+// ////////////////////////////////////////////////////////////
+// ////////////////////////////////////////////////////////////
+// ////////////////////////////////////////////////////////////
+// ////////////////////////////////////////////////////////////
+// ////////////////////////////////////////////////////////////
+// ////////////////////////////////////////////////////////////
+// ////////////////////////////////////////////////////////////
+// ////////////////////////////////////////////////////////////
+// ////////////////////////////////////////////////////////////
+
+// const fs = require("fs");
+// const path = require("path");
+// const axios = require("axios");
+// const sharp = require("sharp");
+// const { v4: uuidv4 } = require("uuid");
+
+// const uploadImageFromUrl = async (imageUrl, options = {}) => {
+//   // ۱. تعیین نام فایل و مسیر ذخیره‌سازی
+//   const fileName = `${Date.now()}-${uuidv4()}.jpg`;
+//   const uploadDir = path.join(__dirname, "..", "public", "uploads"); // مسیر پوشه آپلود
+//   const filePath = path.join(uploadDir, fileName);
+
+//   // ایجاد پوشه اگر وجود نداشته باشد
+//   if (!fs.existsSync(uploadDir)) {
+//     fs.mkdirSync(uploadDir, { recursive: true });
+//   }
+
+//   // تنظیمات پیش‌فرض برای فشردگی
+//   const defaultOptions = {
+//     quality: 80,
+//     width: 800,
+//     height: 800,
+//     format: "jpeg",
+//   };
+
+//   const config = { ...defaultOptions, ...options };
+
+//   try {
+//     // console.log({ imageUrl });
+//     // ۲. دانلود تصویر به صورت باینری
+//     const response = await axios.get(imageUrl, {
+//       responseType: "arraybuffer",
+//       timeout: 20000,
+//       headers: {
+//         // اگر از نوع Bearer پشتیبانی می‌کند:
+//         Authorization: `Bearer 890588018:8B58TpZfCWe5lZw3KPPgWChNgRxrUW0DIbg`,
+//         Accept: "application/octet-stream,*/*",
+//       },
+//       validateStatus: () => true, // برای دیباگ: حتی اگر 404/500 شد، جواب را چاپ کنیم
+//     });
+
+//     // console.log("status:", response.status);
+//     // console.log("headers:", response.headers);
+//     // console.log(
+//     //   "body head:",
+//     //   Buffer.from(response.data).slice(0, 200).toString("utf8"),
+//     // );
+
+//     // ۳. پردازش و فشردگی با Sharp
+
+//     console.time("compress");
+//     const compressedImageBuffer = await sharp(
+//       Buffer.from(response.data),
+//     )
+//       .resize({
+//         width: config.width,
+//         height: config.height,
+//         fit: "inside",
+//         withoutEnlargement: true,
+//       })
+//       .jpeg({
+//         quality: config.quality,
+//         progressive: true,
+//         mozjpeg: true,
+//       })
+//       .toBuffer();
+//     console.timeEnd("compress");
+
+//     // ۴. ذخیره فایل در سیستم با استفاده از fs
+//     fs.writeFileSync(filePath, compressedImageBuffer);
+//     // console.log(`File saved to: ${filePath}`);
+
+//     // ۵. بازگرداندن لینک مستقیم (فرض بر این است که سرور شما روی پورت مثلاً ۳۰۰۰ است)
+//     // اگر از اکسپرس استفاده می‌کنید، باید پوشه public را استاتیک کنید
+//     // مثال: app.use(express.static('public'));
+//     const publicUrl = `./public/uploads/${fileName}`;
+
+//     // اگر می‌خواهید آدرس کامل با دامنه برگردانده شود:
+//     // const fullUrl = `https://yourdomain.com/${publicUrl}`;
+
+//     return publicUrl;
+//   } catch (error) {
+//     console.error("خطا در پردازش و ذخیره تصویر:", error.message);
+//     throw error;
+//   }
+// };
+
+// module.exports = {
+//   uploadImageFromUrl,
+// };
 
 // ///////////////////////////////////////////////////////
 // ///////////////////////////////////////////////////////
