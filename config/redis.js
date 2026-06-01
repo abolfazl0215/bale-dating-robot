@@ -16,7 +16,9 @@ const logger = winston.createLogger({
 });
 
 const REDIS_URL =
-  "redis://:UkBjGl7nfkbJCpW2@services.irn8.chabokan.net:53254";
+  global.currentPlatform == "bale"
+    ? "redis://:UkBjGl7nfkbJCpW2@services.irn8.chabokan.net:53254"
+    : "redis://default:VjQdb3pc5w7q5tMtV49proNfl4AjEIJO@redis-17678.crce309.us-east-1-6.ec2.cloud.redislabs.com:17678";
 
 const redisClient = new Redis(REDIS_URL, {
   reconnectOnError: (err) => {
@@ -98,9 +100,10 @@ const newLikeQueue = createQueue("newLikeQueue");
 const sendMessageToAllQueue = createQueue("sendMessageToAllQueue");
 const cleanupOldUsersQueue = createQueue("cleanupOldUsersQueue");
 const goToNotificationMenu = createQueue("goToNotificationMenu");
-const requestToFillSuggestQueue = createQueue("requestToFillSuggestQueue");
+const requestToFillSuggestQueue = createQueue(
+  "requestToFillSuggestQueue",
+);
 const fillForYouListQueue = createQueue("fillForYouListQueue");
-
 
 module.exports = {
   redisClient,
@@ -117,5 +120,3 @@ module.exports = {
   fillForYouListQueue,
   logger,
 };
-
-
