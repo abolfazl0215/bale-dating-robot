@@ -1,9 +1,15 @@
 const { Telegraf } = require("telegraf");
-const bot = new Telegraf(
-  // "53189952:CAqduQyWuDiC7xHZWjNqQVFTTvwb3lBFzHI",
-  "464655215:70b-Xr7K_6BvjHKHklKe_q2qNSZ3ncI1-rU", //pounesbot
-  {
-    telegram: { apiRoot: "https://tapi.bale.ai/bot" },
-  },
-);
+let bot;
+if (global.currentPlatform == "bale") {
+  bot = new Telegraf(
+    "464655215:70b-Xr7K_6BvjHKHklKe_q2qNSZ3ncI1-rU",
+    {
+      telegram: { apiRoot: "https://tapi.bale.ai/bot" },
+    },
+  );
+} else {
+  bot = new Telegraf(
+    "8853616218:AAFKyHNYv2g4dSfiBqgNJJD7vY8lgjY2oLk",
+  );
+}
 module.exports = bot;

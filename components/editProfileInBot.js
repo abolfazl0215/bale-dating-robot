@@ -332,89 +332,81 @@ const editProfileInBot = async (
     }
   }
   if (step === "lookingFor") {
-    if (
-      ctx?.message?.text === "خانم 💁‍♀️" ||
-      ctx?.message?.text === "آقا 🙆‍♂️" ||
-      ctx?.message?.text === "فرقی ندارد ⚧️"
-    ) {
-      savedUser.editProfileStep = "genderFilter";
-      savedUser.lookingFor =
-        ctx?.message?.text === "خانم 💁‍♀️"
-          ? "female"
-          : ctx?.message?.text === "آقا 🙆‍♂️"
-            ? "male"
-            : "noMatter";
-      // await savedUser.save();
+  if (
+    ctx?.message?.text === "خانم 💁‍♀️" ||
+    ctx?.message?.text === "آقا 🙆‍♂️" ||
+    ctx?.message?.text === "فرقی ندارد ⚧️"
+  ) {
+    // ✅ genderFilter حذف شد، مستقیم به state
+    savedUser.editProfileStep = "state";
+    savedUser.lookingFor =
+      ctx?.message?.text === "خانم 💁‍♀️"
+        ? "female"
+        : ctx?.message?.text === "آقا 🙆‍♂️"
+          ? "male"
+          : "noMatter";
 
+    await User.findOneAndUpdate(
+      { telegramId },
+      { editProfileStep: "state", lookingFor: savedUser.lookingFor },
+    );
+
+    usersMap.set(telegramId, { time: Date.now(), user: savedUser });
+
+    try {
+      const showStates = states.map((item) => item.local);
+      await reply(
+        ctx, next, redisClient,
+        "استان خود را انتخاب کنید 🏙️",
+        [[{ text: "مرحله قبلی" }], ...chunkArray(showStates, 3)],
+      );
+    } catch (error) {
+      await reply(ctx, next, redisClient, "مشکلی پیش آمده است");
+    }
+
+  } else if (ctx?.message?.text === "مرحله قبلی") {
+    // برگشت به age — تغییری نمیکنه
+    savedUser.editProfileStep = "age";
+    await User.findOneAndUpdate({ telegramId }, { editProfileStep: "age" });
+    usersMap.set(telegramId, { time: Date.now(), user: savedUser });
+
+    try {
+      await reply(ctx, next, redisClient, "سن خود را انتخاب کنید", [
+        ...chunkArray(ages, 4),
+      ]);
+    } catch (error) {
+      await reply(ctx, next, redisClient, "مشکلی پیش آمده است");
+    }
+
+  } else {
+    try {
+      await reply(
+        ctx, next, redisClient,
+        "به دنبال چه کسی می گردید ؟",
+        [
+          [{ text: "خانم 💁‍♀️" }, { text: "آقا 🙆‍♂️" }, { text: "فرقی ندارد ⚧️" }],
+          [{ text: "مرحله قبلی" }],
+        ],
+      );
+    } catch (error) {
+      await reply(ctx, next, redisClient, "مشکلی پیش آمده است");
+    }
+  }
+}
+  if (step === "state") {
+    const findState = states.find(
+      (s) => s.local === ctx?.message?.text,
+    );
+
+    if (ctx?.message?.text === "مرحله قبلی") {
+      // ✅ قبلاً به genderFilter برمیگشت، حالا به lookingFor
+      savedUser.editProfileStep = "lookingFor";
       await User.findOneAndUpdate(
         { telegramId },
-        {
-          editProfileStep: "genderFilter",
-          lookingFor: savedUser.lookingFor,
-        },
+        { editProfileStep: "lookingFor" },
       );
+      usersMap.set(telegramId, { time: Date.now(), user: savedUser });
 
-      usersMap.set(telegramId, {
-        time: Date.now(),
-        user: savedUser,
-      });
-
-      try {
-        await reply(
-          ctx,
-          next,
-          redisClient,
-          "پروفایل شما به چه کسانی نمایش داده شود ؟",
-          [
-            [{ text: "به همه نمایش بده 😎" }],
-            [{ text: "فقط خانم ها 💁‍♀️" }, { text: "فقط آقایان 🙆‍♂️" }],
-            [{ text: "مرحله قبلی" }],
-          ],
-        );
-      } catch (error) {
-        console.log(error);
-        try {
-          // await ctx.reply(
-          //   "مشکلی پیش آمده است لطفا به پشتیبانی اطلاع دهید (آیدی پشتیبانی در بیو)" +
-          //     "r5",
-          // );
-          await reply(
-            ctx,
-            next,
-            redisClient,
-            "مشکلی پیش آمده است لطفا به پشتیبانی اطلاع دهید (آیدی پشتیبانی در بیو)",
-          );
-        } catch (e) {}
-      }
-    } else if (ctx?.message?.text === "مرحله قبلی") {
-      savedUser.editProfileStep = "age";
-      // await savedUser.save();
-
-      await User.findOneAndUpdate(
-        { telegramId },
-        { editProfileStep: "age" },
-      );
-
-      usersMap.set(telegramId, {
-        time: Date.now(),
-        user: savedUser,
-      });
-
-      try {
-        await reply(ctx, next, redisClient, "سن خود را انتخاب کنید", [
-          ...chunkArray(ages, 4),
-        ]);
-      } catch (error) {
-        try {
-          await reply(
-            ctx,
-            next,
-            redisClient,
-            "مشکلی پیش آمده است لطفا به پشتیبانی اطلاع دهید (آیدی پشتیبانی در بیو) fghv87",
-          );
-        } catch (e) {}
-      }
-    } else {
       try {
         await reply(
           ctx,
@@ -431,181 +423,7 @@ const editProfileInBot = async (
           ],
         );
       } catch (error) {
-        try {
-          // await ctx.reply(
-          //   "مشکلی پیش آمده است لطفا به پشتیبانی اطلاع دهید (آیدی پشتیبانی در بیو)" +
-          //     "r15",
-          // );
-          await reply(
-            ctx,
-            next,
-            redisClient,
-            "مشکلی پیش آمده است لطفا به پشتیبانی اطلاع دهید (آیدی پشتیبانی در بیو) hj67w",
-          );
-        } catch (e) {}
-      }
-    }
-  }
-  if (step === "genderFilter") {
-    if (
-      ctx?.message?.text === "به همه نمایش بده 😎" ||
-      ctx?.message?.text === "فقط خانم ها 💁‍♀️" ||
-      ctx?.message?.text === "فقط آقایان 🙆‍♂️"
-    ) {
-      savedUser.editProfileStep = "state";
-      savedUser.genderFilter =
-        ctx?.message?.text === "فقط خانم ها 💁‍♀️"
-          ? "female"
-          : ctx?.message?.text === "فقط آقایان 🙆‍♂️"
-            ? "male"
-            : "all";
-
-      await User.findOneAndUpdate(
-        { telegramId },
-        {
-          editProfileStep: "state",
-          genderFilter: savedUser.genderFilter,
-        },
-      );
-
-      usersMap.set(telegramId, {
-        time: Date.now(),
-        user: savedUser,
-      });
-
-      try {
-        const showStates = states.map((item) => item.local);
-        await reply(
-          ctx,
-          next,
-          redisClient,
-          "استان خود را انتخاب کنید 🏙️",
-          [[{ text: "مرحله قبلی" }], ...chunkArray(showStates, 3)],
-        );
-      } catch (error) {
-        console.log(error);
-        try {
-          await reply(
-            ctx,
-            next,
-            redisClient,
-            "مشکلی پیش آمده است لطفا به پشتیبانی اطلاع دهید (آیدی پشتیبانی در بیو)",
-          );
-        } catch (e) {}
-      }
-    } else if (ctx?.message?.text === "مرحله قبلی") {
-      savedUser.editProfileStep = "lookingFor";
-      // await savedUser.save();
-      await User.findOneAndUpdate(
-        { telegramId },
-        { editProfileStep: "lookingFor" },
-      );
-
-      usersMap.set(telegramId, {
-        time: Date.now(),
-        user: savedUser,
-      });
-
-      try {
-        await reply(
-          ctx,
-          next,
-          redisClient,
-          "دنبال چه کسی میگردید ؟ 🔎",
-          [
-            [
-              { text: "خانم 💁‍♀️" },
-              { text: "آقا " },
-              { text: "فرقی ندارد ⚧️" },
-            ],
-            [{ text: "مرحله قبلی" }],
-          ],
-        );
-      } catch (error) {
-        console.log(error);
-        try {
-          await reply(
-            ctx,
-            next,
-            redisClient,
-            "مشکلی پیش آمده است لطفا به پشتیبانی اطلاع دهید (آیدی پشتیبانی در بیو)",
-          );
-        } catch (e) {}
-      }
-    } else {
-      try {
-        await reply(
-          ctx,
-          next,
-          redisClient,
-          "پروفایل شما به چه کسانی نمایش داده شود ؟",
-          [
-            [{ text: "به همه نمایش بده 😎" }],
-            [{ text: "فقط خانم ها 💁‍♀️" }, { text: "فقط آقایان 🙆‍♂️" }],
-            [{ text: "مرحله قبلی" }],
-          ],
-        );
-      } catch (error) {
-        console.log(error);
-        try {
-          // await ctx.reply(
-          //   "مشکلی پیش آمده است لطفا به پشتیبانی اطلاع دهید (آیدی پشتیبانی در بیو)" +
-          //     "r5",
-          // );
-          await reply(
-            ctx,
-            next,
-            redisClient,
-            "مشکلی پیش آمده است لطفا به پشتیبانی اطلاع دهید (آیدی پشتیبانی در بیو)",
-          );
-        } catch (e) {}
-      }
-    }
-  }
-  if (step === "state") {
-    const findState = states.find(
-      (s) => s.local === ctx?.message?.text,
-    );
-
-    if (ctx?.message?.text === "مرحله قبلی") {
-      savedUser.editProfileStep = "genderFilter";
-      // await savedUser.save();
-      await User.findOneAndUpdate(
-        { telegramId },
-        { editProfileStep: "genderFilter" },
-      );
-
-      usersMap.set(telegramId, {
-        time: Date.now(),
-        user: savedUser,
-      });
-
-      try {
-        await reply(
-          ctx,
-          next,
-          redisClient,
-          "پروفایل شما به چه کسانی نمایش داده شود ؟",
-          [
-            [{ text: "به همه نمایش بده 😎" }],
-            [{ text: "فقط خانم ها 💁‍♀️" }, { text: "فقط آقایان 🙆‍♂️" }],
-            [{ text: "مرحله قبلی" }],
-          ],
-        );
-      } catch (error) {
-        console.log(error);
-        try {
-          // await ctx.reply(
-          //   "مشکلی پیش آمده است لطفا به پشتیبانی اطلاع دهید (آیدی پشتیبانی در بیو)" +
-          //     "r5",
-          // );
-          await reply(
-            ctx,
-            next,
-            redisClient,
-            "مشکلی پیش آمده است لطفا به پشتیبانی اطلاع دهید (آیدی پشتیبانی در بیو)",
-          );
-        } catch (e) {}
+        await reply(ctx, next, redisClient, "مشکلی پیش آمده است");
       }
     } else if (findState) {
       savedUser.editProfileStep = "name";

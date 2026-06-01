@@ -27,6 +27,7 @@ message User {
   repeated string profileImages = 19;
   string inviteCode = 20;
   string genderFilter = 21;
+  string platform = 22;
 }
 
 

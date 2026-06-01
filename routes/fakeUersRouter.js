@@ -328,9 +328,7 @@ router.post("/fakeUsers", async (req, res) => {
   const { count = 200, secretKey } = req.body;
 
   // امنیت ساده
-  if (secretKey !== process.env.ADMIN_SECRET_KEY) {
-    return res.status(401).json({ error: "Unauthorized" });
-  }
+
 
   if (count > 500) {
     return res.status(400).json({ error: "Max 500 users at a time" });
@@ -383,9 +381,7 @@ router.post("/fakeUsers", async (req, res) => {
 // ─── روت GET /admin/fake-users-count ─────────────────────────────────────────
 router.get("/admin/fake-users-count", async (req, res) => {
   const { secretKey } = req.query;
-  if (secretKey !== process.env.ADMIN_SECRET_KEY) {
-    return res.status(401).json({ error: "Unauthorized" });
-  }
+
   try {
     // چون فیلد isFake در اسکیما نداریم، با userName fake_ شمارش می‌کنیم
     const count = await User.countDocuments({
@@ -400,9 +396,7 @@ router.get("/admin/fake-users-count", async (req, res) => {
 // ─── روت DELETE /admin/delete-fake-users ─────────────────────────────────────
 router.delete("/admin/delete-fake-users", async (req, res) => {
   const { secretKey } = req.body;
-  if (secretKey !== process.env.ADMIN_SECRET_KEY) {
-    return res.status(401).json({ error: "Unauthorized" });
-  }
+
   try {
     const redisClient = req.redisClient;
 

@@ -52,7 +52,9 @@ const userSchema = new mongoose.Schema({
   state: { type: String, index: true },
   bio: { type: String },
 
-  genderFilter: { type: String, default: "all" },
+  // genderFilter: { type: String, default: "all" },
+  platform: { type: String, default: "" },
+  appId: String,
 
   profileImages: [{ type: String }],
   profileImagesEdit: [{ type: String }],
@@ -74,6 +76,7 @@ const userSchema = new mongoose.Schema({
       state: String,
       age: String,
       bio: String,
+      platform:String,
     },
   ],
 });
