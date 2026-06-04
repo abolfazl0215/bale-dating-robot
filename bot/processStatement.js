@@ -339,16 +339,21 @@ function createProcessStatement() {
               ],
             );
           } else {
-            const text = `
-از طریق دکمه زیر وارد برنامه شوید 👇🏻
-
-<a href='pounes://user?telegramId=${telegramId}'>اینجا کلیک کن</a>
-<a href='pounes://user?telegramId=${telegramId}'>اینجا کلیک کن</a>
-<a href='pounes://user?telegramId=${telegramId}'>اینجا کلیک کن</a>
-`;
-            await ctx.reply(text, {
-              parse_mode: "HTML",
-            });
+            await reply(
+              ctx,
+              next,
+              redisClient,
+              "از طریق دکمه زیر وارد برنامه شوید 👇🏻",
+              [],
+              [
+                [
+                  {
+                    text: "ورود به برنامه 😎",
+                    url: `https://pounes.ir/open?data=${telegramId}`,
+                  },
+                ],
+              ],
+            );
           }
           return;
         }
@@ -3031,16 +3036,21 @@ function createProcessStatement() {
               ],
             );
           } else {
-            const text = `
-از طریق دکمه زیر وارد برنامه شوید 👇🏻
-
-<a href='pounes://user?telegramId=${telegramId}'>اینجا کلیک کن</a>
-<a href='pounes://user?telegramId=${telegramId}'>اینجا کلیک کن</a>
-<a href='pounes://user?telegramId=${telegramId}'>اینجا کلیک کن</a>
-`;
-            await ctx.reply(text, {
-              parse_mode: "HTML",
-            });
+            await reply(
+              ctx,
+              next,
+              redisClient,
+              "از طریق دکمه زیر وارد برنامه شوید 👇🏻",
+              [],
+              [
+                [
+                  {
+                    text: "ورود به برنامه 😎",
+                    url: `https://pounes.ir/open?data=${telegramId}`,
+                  },
+                ],
+              ],
+            );
           }
           return;
         }
