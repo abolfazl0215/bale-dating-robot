@@ -2982,7 +2982,7 @@ function createProcessStatement() {
             ],
           );
         }
-        if (inviteCode && inviteCode.startsWith("joinapptelegram")) {
+        if (inviteCode && inviteCode.startsWith("joinwithtelegram")) {
           if (!userName) {
             await reply(
               ctx,
