@@ -25,8 +25,7 @@ const {
   requestToFillSuggestQueue,
 } = require("../config/redis");
 const { checkUrl } = require("../utils/checkUrl.js");
-
-const appIds = new Map();
+const { encrypt } = require("../utils/encrypt.js");
 
 function createProcessStatement() {
   const {
@@ -45,28 +44,7 @@ function createProcessStatement() {
   const generateInviteLink = (telegramId) =>
     `${BOT_INVITE_BASE}${generateInviteCode(telegramId)}`;
 
-  // کلید مخفی خودت (حداقل ۳۲ کاراکتر - خیلی مهم است)
-  const SECRET_KEY = "saklndklqDQWwefwergWFQ@$#gvbd2#_,qwekn";
-
-  // تبدیل آبجکت به رشته رمزنگاری شده
-  function encrypt(data) {
-    const iv = crypto.randomBytes(16); // Initialization Vector
-    const cipher = crypto.createCipheriv(
-      "aes-256-cbc",
-      Buffer.from(SECRET_KEY),
-      iv,
-    );
-
-    let encrypted = cipher.update(
-      JSON.stringify(data),
-      "utf8",
-      "hex",
-    );
-    encrypted += cipher.final("hex");
-
-    // iv را هم با داده برگردان (برای دیکریپت لازم است)
-    return iv.toString("hex") + ":" + encrypted;
-  }
+ 
 
   const processStatement = async (ctx, next) => {
     try {
@@ -365,13 +343,7 @@ function createProcessStatement() {
               ],
             );
           } else {
-            const parts = inviteCode.split("-");
-            const appId = parts[1];
-            if (!appIds.get(telegramId))
-              appIds.set(telegramId, appId);
-
             const data_ = {
-              appId: appId,
               telegramId: String(telegramId),
               userName: userName,
             };
@@ -3081,6 +3053,13 @@ function createProcessStatement() {
               ],
             );
           } else {
+            const data_ = {
+              telegramId: String(telegramId),
+              userName: userName,
+            };
+
+            const encryptedData = encrypt(data_);
+
             await reply(
               ctx,
               next,
@@ -3091,13 +3070,13 @@ function createProcessStatement() {
                 [
                   {
                     text: "ورود به برنامه 😎 (با اینترنت بین الملل)",
-                    url: `https://redirect-to-app-delta.vercel.app/open?data=${telegramId}`,
+                    url: `https://redirect-to-app-delta.vercel.app/open?data=${encryptedData}`,
                   },
                 ],
                 [
                   {
                     text: "ورود به برنامه 😎 (با اینترنت داخلی)",
-                    url: `https://pounes.ir/open?data=${telegramId}`,
+                    url: `https://pounes.ir/open?data=${encryptedData}`,
                   },
                 ],
               ],

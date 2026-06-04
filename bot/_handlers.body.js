@@ -1,4 +1,5 @@
 const { checkUrl } = require("../utils/checkUrl");
+const { encrypt } = require("../utils/encrypt");
 
 bot.start(async (ctx, next) => {
   try {
@@ -460,6 +461,64 @@ bot.action("done_start", async (ctx, next) => {
     console.log(error);
   }
 });
+
+  bot.action("set_telegram_username", async (ctx, next) => {
+    try {
+      await ctx.answerCbQuery(); // حذف لودینگ دکمه
+
+      const telegramId = ctx?.from?.id;
+      const userName = ctx?.from?.username;
+
+      if (!userName) {
+        await reply(
+          ctx,
+          next,
+          redisClient,
+          "هنوز userName ندارید \n\n- لطفا ابتدا یک نام کاربری (آیدی) انتخاب کنید",
+          [],
+          [
+            [
+              {
+                text: "انجام دادم ✅",
+                callback_data: "set_telegram_username",
+              },
+            ],
+          ],
+        );
+      } else {
+        const data_ = {
+          telegramId: String(telegramId),
+          userName: userName,
+        };
+
+        const encryptedData = encrypt(data_);
+
+        await reply(
+          ctx,
+          next,
+          redisClient,
+          "از طریق دکمه زیر وارد برنامه شوید 👇🏻",
+          [],
+          [
+            [
+              {
+                text: "ورود به برنامه 😎 (با اینترنت بین الملل)",
+                url: `https://redirect-to-app-delta.vercel.app/open?data=${encryptedData}`,
+              },
+            ],
+            [
+              {
+                text: "ورود به برنامه 😎 (با اینترنت داخلی)",
+                url: `https://pounes.ir/open?data=${encryptedData}`,
+              },
+            ],
+          ],
+        );
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  });
 
 const reportAction = async (reportType, telegramId___, ctx, next) => {
   try {

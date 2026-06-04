@@ -8,9 +8,10 @@ const { redisClient } = require("../config/redis");
 const { registerPaymentHandlers } = require("./payments");
 const { registerReportHandlers } = require("./reports");
 const { checkUrl } = require("../utils/checkUrl.js");
+const { encrypt } = require("../utils/encrypt.js");
 
 function registerBotHandlers(bot, processStatement) {
-  const { usersMap } = state;
+  const { usersMap, appIds } = state;
 
   bot.start(async (ctx, next) => {
     try {
@@ -20,10 +21,12 @@ function registerBotHandlers(bot, processStatement) {
       console.log(error);
     }
   });
-  
+
   bot.command("matches", async (ctx, next) => {
     try {
-      const findUser = await User.findOne({ telegramId: ctx.from.id });
+      const findUser = await User.findOne({
+        telegramId: ctx.from.id,
+      });
       if (findUser) {
         if (findUser.subscriptionExpireTime > Date.now()) {
           let matches = findUser.matches
@@ -72,25 +75,25 @@ function registerBotHandlers(bot, processStatement) {
       console.log(error);
     }
   });
-  
+
   bot.action(/answer_message_(.+)/, async (ctx, next) => {
     try {
       await ctx.answerCbQuery();
       const telegramId = ctx.match[1];
-  
+
       let existingUser =
         usersMap.get(ctx.from.id)?.user ??
         (await User.findOne({ telegramId: ctx.from.id }));
-  
+
       if (!existingUser) return;
-  
+
       existingUser.userStep = "answer";
       existingUser.lastAnsweredMessage = +telegramId;
       usersMap.set(ctx.from.id, {
         user: existingUser,
         time: Date.now(),
       });
-  
+
       await reply(
         ctx,
         next,
@@ -102,11 +105,11 @@ function registerBotHandlers(bot, processStatement) {
       console.error(error);
     }
   });
-  
+
   bot.hears(/\/user_(.+)/, async (ctx, next) => {
     const userId = ctx.match[1]; // مقدار بعد از user_
     const telegramId___ = ctx.from.id;
-  
+
     let existingUser;
     try {
       const findUser = await User.findOne({ inviteCode: userId });
@@ -116,7 +119,7 @@ function registerBotHandlers(bot, processStatement) {
         } catch (error) {
           console.log(error);
         }
-  
+
         return;
       }
       const {
@@ -128,7 +131,7 @@ function registerBotHandlers(bot, processStatement) {
         telegramId,
         inviteCode,
       } = findUser;
-  
+
       if (usersMap.get(telegramId___)) {
         existingUser = usersMap.get(telegramId___).user;
         existingUser.userStep = "userProfile";
@@ -151,11 +154,11 @@ function registerBotHandlers(bot, processStatement) {
           time: Date.now(),
         });
       }
-  
+
       const photo = profileImages[0];
       const blockedByMee = existingUser?.blockedByMe || [];
       const findBlock = blockedByMee.find((f) => f == +telegramId);
-  
+
       try {
         await ctx.replyWithPhoto(checkUrl(photo), {
           caption: `${fullName}, ${age}, ${state} ${
@@ -214,7 +217,7 @@ function registerBotHandlers(bot, processStatement) {
       console.log(error);
     }
   });
-  
+
   bot.on("message", async (ctx, next) => {
     try {
       await processStatement(ctx, next);
@@ -222,13 +225,13 @@ function registerBotHandlers(bot, processStatement) {
       console.log(error);
     }
   });
-  
+
   registerPaymentHandlers(bot);
 
   bot.action("done_start", async (ctx, next) => {
     try {
       await ctx.answerCbQuery(); // حذف لودینگ دکمه
-  
+
       // شبیه‌سازی اجرای دستور /start
       await bot.handleUpdate({
         update_id: Date.now(),
@@ -244,7 +247,64 @@ function registerBotHandlers(bot, processStatement) {
       console.log(error);
     }
   });
-  
+  bot.action("set_telegram_username", async (ctx, next) => {
+    try {
+      await ctx.answerCbQuery(); // حذف لودینگ دکمه
+
+      const telegramId = ctx?.from?.id;
+      const userName = ctx?.from?.username;
+
+      if (!userName) {
+        await reply(
+          ctx,
+          next,
+          redisClient,
+          "هنوز userName ندارید \n\n- لطفا ابتدا یک نام کاربری (آیدی) انتخاب کنید",
+          [],
+          [
+            [
+              {
+                text: "انجام دادم ✅",
+                callback_data: "set_telegram_username",
+              },
+            ],
+          ],
+        );
+      } else {
+        const data_ = {
+          telegramId: String(telegramId),
+          userName: userName,
+        };
+
+        const encryptedData = encrypt(data_);
+
+        await reply(
+          ctx,
+          next,
+          redisClient,
+          "از طریق دکمه زیر وارد برنامه شوید 👇🏻",
+          [],
+          [
+            [
+              {
+                text: "ورود به برنامه 😎 (با اینترنت بین الملل)",
+                url: `https://redirect-to-app-delta.vercel.app/open?data=${encryptedData}`,
+              },
+            ],
+            [
+              {
+                text: "ورود به برنامه 😎 (با اینترنت داخلی)",
+                url: `https://pounes.ir/open?data=${encryptedData}`,
+              },
+            ],
+          ],
+        );
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  });
+
   registerReportHandlers(bot, usersMap);
 }
 
