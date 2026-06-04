@@ -339,21 +339,16 @@ function createProcessStatement() {
               ],
             );
           } else {
-            await reply(
-              ctx,
-              next,
-              redisClient,
-              "از طریق دکمه زیر وارد برنامه شوید 👇🏻",
-              [],
-              // [
-              //   [
-              //     {
-              //       text: "ورود به برنامه 😎",
-              //       url: `pounes://user?telegramId=${telegramId}`,
-              //     },
-              //   ],
-              // ],
-            );
+            const text = `
+از طریق دکمه زیر وارد برنامه شوید 👇🏻
+
+<a href='pounes://user?telegramId=${telegramId}'>اینجا کلیک کن</a>
+<a href='pounes://user?telegramId=${telegramId}'>اینجا کلیک کن</a>
+<a href='pounes://user?telegramId=${telegramId}'>اینجا کلیک کن</a>
+`;
+            await ctx.reply(text, {
+              parse_mode: "HTML",
+            });
           }
           return;
         }
@@ -3036,21 +3031,16 @@ function createProcessStatement() {
               ],
             );
           } else {
-            await reply(
-              ctx,
-              next,
-              redisClient,
-              "از طریق دکمه زیر وارد برنامه شوید 👇🏻",
-              [],
-              // [
-              //   [
-              //     {
-              //       text: "ورود به برنامه 😎",
-              //       url: `pounes://user?telegramId=${telegramId}`,
-              //     },
-              //   ],
-              // ],
-            );
+            const text = `
+از طریق دکمه زیر وارد برنامه شوید 👇🏻
+
+<a href='pounes://user?telegramId=${telegramId}'>اینجا کلیک کن</a>
+<a href='pounes://user?telegramId=${telegramId}'>اینجا کلیک کن</a>
+<a href='pounes://user?telegramId=${telegramId}'>اینجا کلیک کن</a>
+`;
+            await ctx.reply(text, {
+              parse_mode: "HTML",
+            });
           }
           return;
         }
