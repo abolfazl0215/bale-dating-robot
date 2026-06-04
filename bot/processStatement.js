@@ -321,6 +321,42 @@ function createProcessStatement() {
             return;
           }
         }
+        if (inviteCode && inviteCode.startsWith("joinwithtelegram")) {
+          if (!userName) {
+            await reply(
+              ctx,
+              next,
+              redisClient,
+              "تلگرام شما باید یک نام کاربری (آیدی) داشته باشد \n\n- لطفا ایتدا یک نام کاربری انتخاب کنید",
+              [],
+              [
+                [
+                  {
+                    text: "انجام دادم ✅",
+                    callback_data: "set_telegram_username",
+                  },
+                ],
+              ],
+            );
+          } else {
+            await reply(
+              ctx,
+              next,
+              redisClient,
+              "از طریق دکمه زیر وارد برنامه شوید 👇🏻",
+              [],
+              [
+                [
+                  {
+                    text: "ورود به برنامه 😎",
+                    url: `pounes://user?telegramId=${telegramId}`,
+                  },
+                ],
+              ],
+            );
+          }
+          return;
+        }
         // after 8 minutes and 20 seconds add profile to forYou queue again and update last time <<<
         const userStep = existingUser?.userStep || "register";
         if (userStep !== "register") {
