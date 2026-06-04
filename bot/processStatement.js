@@ -52,7 +52,7 @@ function createProcessStatement() {
       const isBot = ctx?.from?.is_bot;
       const inviteCode = ctx?.startPayload;
 
-      if (global.platform == "telegram") {
+      if (global.currentPlatform == "telegram") {
         if (!userName) {
           await reply(
             ctx,
