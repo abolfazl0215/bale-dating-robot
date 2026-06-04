@@ -6,6 +6,7 @@ const Pictures = require("../models/Pictures");
 const fs = require("fs");
 const { reply } = require("../telegram_methods/reply");
 const { requestToFillSuggestQueue } = require("../config/redis");
+const { checkUrl } = require("../utils/checkUrl");
 
 const changePhoto = async (
   ctx,
@@ -84,7 +85,7 @@ const changePhoto = async (
             // const buffer = await getPic(photos[0]);
             try {
               await ctx.replyWithPhoto(
-                photos[0],
+                checkUrl(photos[0]),
                 // {
                 //   source:
                 //     fs.existsSync(photos[0]) &&
@@ -178,7 +179,7 @@ const changePhoto = async (
 
                 try {
                   await ctx.replyWithPhoto(
-                    photos[0],
+                    checkUrl(photos[0]),
                     // {
                     //   source:
                     //     fs.existsSync(photos[0]) &&
@@ -307,7 +308,7 @@ const changePhoto = async (
         // const buffer = await getPic(photos[0]);
         try {
           await ctx.replyWithPhoto(
-            photos[0],
+            checkUrl(photos[0]),
             // {
             //   source:
             //     fs.existsSync(photos[0]) &&
@@ -392,6 +393,7 @@ const changePhoto = async (
       const fileLink = await ctx.telegram.getFileLink(fileId);
 
       const imageUrl = await uploadImageFromUrl(fileLink);
+      // const imageUrl = fileLink?.href || "";
       // console.log({ imageUrl });
       if (photos.length === 3) return;
       photos.push(imageUrl);
@@ -470,7 +472,7 @@ const changePhoto = async (
         const bio = existingUser?.bio ?? "";
 
         try {
-          await ctx.replyWithPhoto(photos[0], {
+          await ctx.replyWithPhoto(checkUrl(photos[0]), {
             caption: `${fullName}, ${age}, ${state} ${
               bio ? "\n" + bio : ""
             } `,
@@ -558,7 +560,7 @@ const changePhoto = async (
       // console.log({ photos });
       try {
         await ctx.replyWithPhoto(
-          photos[0],
+          checkUrl(photos[0]),
           // {
           //   source:
           //     fs.existsSync(photos[0]) &&

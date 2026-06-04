@@ -7,6 +7,7 @@ const state = require("../app/state");
 const { redisClient } = require("../config/redis");
 const { registerPaymentHandlers } = require("./payments");
 const { registerReportHandlers } = require("./reports");
+const { checkUrl } = require("../utils/checkUrl.js");
 
 function registerBotHandlers(bot, processStatement) {
   const { usersMap } = state;
@@ -156,7 +157,7 @@ function registerBotHandlers(bot, processStatement) {
       const findBlock = blockedByMee.find((f) => f == +telegramId);
   
       try {
-        await ctx.replyWithPhoto(photo, {
+        await ctx.replyWithPhoto(checkUrl(photo), {
           caption: `${fullName}, ${age}, ${state} ${
             bio ? "\n" + bio : ""
           }\n/user_${userId || "not_found"}`,

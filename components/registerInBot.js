@@ -7,6 +7,7 @@ const Pictures = require("../models/Pictures");
 const fs = require("fs");
 const { reply } = require("../telegram_methods/reply");
 const { requestToFillSuggestQueue } = require("../config/redis");
+const { checkUrl } = require("../utils/checkUrl");
 
 function containsLinkOrTelegramID(str) {
   // الگوی کلی برای تشخیص انواع لینک‌های URL
@@ -461,69 +462,83 @@ const registerInBot = async (
     }
   }
   if (step === "lookingFor") {
-  if (
-    ctx?.message?.text === "خانم 💁‍♀️" ||
-    ctx?.message?.text === "آقا 🙆‍♂️" ||
-    ctx?.message?.text === "فرقی ندارد ⚧️"
-  ) {
-    // ✅ مستقیم به state میره، genderFilter حذف شد
-    savedUser.registerStep = "state";
-    savedUser.lookingFor =
-      ctx?.message?.text === "خانم 💁‍♀️"
-        ? "female"
-        : ctx?.message?.text === "آقا 🙆‍♂️"
-          ? "male"
-          : "noMatter";
+    if (
+      ctx?.message?.text === "خانم 💁‍♀️" ||
+      ctx?.message?.text === "آقا 🙆‍♂️" ||
+      ctx?.message?.text === "فرقی ندارد ⚧️"
+    ) {
+      // ✅ مستقیم به state میره، genderFilter حذف شد
+      savedUser.registerStep = "state";
+      savedUser.lookingFor =
+        ctx?.message?.text === "خانم 💁‍♀️"
+          ? "female"
+          : ctx?.message?.text === "آقا 🙆‍♂️"
+            ? "male"
+            : "noMatter";
 
-    await User.findOneAndUpdate(
-      { telegramId },
-      { registerStep: "state", lookingFor: savedUser.lookingFor },
-    );
-
-    usersMap.set(telegramId, { time: Date.now(), user: savedUser });
-
-    try {
-      const showStates = states.map((item) => item.local);
-      await reply(
-        ctx, next, redisClient,
-        "استان خود را انتخاب کنید 🏙️\n\n⚪️⚪️⚪️⚪️🟢🟢🟢🟢",
-        [[{ text: "مرحله قبلی" }], ...chunkArray(showStates, 3)],
+      await User.findOneAndUpdate(
+        { telegramId },
+        { registerStep: "state", lookingFor: savedUser.lookingFor },
       );
-    } catch (error) {
-      await reply(ctx, next, redisClient, "مشکلی پیش آمده است");
-    }
 
-  } else if (ctx?.message?.text === "مرحله قبلی") {
-    // این بخش تغییری نمیکنه، برمیگرده به gender
-    savedUser.registerStep = "gender";
-    await User.findOneAndUpdate({ telegramId }, { registerStep: "gender" });
-    usersMap.set(telegramId, { time: Date.now(), user: savedUser });
+      usersMap.set(telegramId, { time: Date.now(), user: savedUser });
 
-    try {
-      await reply(
-        ctx, next, redisClient,
-        "جنسیت خود را انتخاب کنید\n\n⭕غیرقابل تغییر⭕\n⭕در انتخاب خود دقت کنید⭕\n\n⚪️⚪️⚪️⚪️⚪️⚪️🟢🟢",
-        [[{ text: "خانم 💁‍♀️" }, { text: "آقا 🙆‍♂️" }], [{ text: "مرحله قبلی" }]],
+      try {
+        const showStates = states.map((item) => item.local);
+        await reply(
+          ctx,
+          next,
+          redisClient,
+          "استان خود را انتخاب کنید 🏙️\n\n⚪️⚪️⚪️⚪️🟢🟢🟢🟢",
+          [[{ text: "مرحله قبلی" }], ...chunkArray(showStates, 3)],
+        );
+      } catch (error) {
+        await reply(ctx, next, redisClient, "مشکلی پیش آمده است");
+      }
+    } else if (ctx?.message?.text === "مرحله قبلی") {
+      // این بخش تغییری نمیکنه، برمیگرده به gender
+      savedUser.registerStep = "gender";
+      await User.findOneAndUpdate(
+        { telegramId },
+        { registerStep: "gender" },
       );
-    } catch (error) {
-      await reply(ctx, next, redisClient, "مشکلی پیش آمده است");
-    }
+      usersMap.set(telegramId, { time: Date.now(), user: savedUser });
 
-  } else {
-    try {
-      await reply(
-        ctx, next, redisClient,
-        "دنبال چه کسی میگردید ؟ 🔎",
-        [
-          [{ text: "خانم 💁‍♀️" }, { text: "آقا 🙆‍♂️" }, { text: "فرقی ندارد ⚧️" }],
-          [{ text: "مرحله قبلی" }],
-        ],
-      );
-    } catch (error) {
-      await reply(ctx, next, redisClient, "مشکلی پیش آمده است");
+      try {
+        await reply(
+          ctx,
+          next,
+          redisClient,
+          "جنسیت خود را انتخاب کنید\n\n⭕غیرقابل تغییر⭕\n⭕در انتخاب خود دقت کنید⭕\n\n⚪️⚪️⚪️⚪️⚪️⚪️🟢🟢",
+          [
+            [{ text: "خانم 💁‍♀️" }, { text: "آقا 🙆‍♂️" }],
+            [{ text: "مرحله قبلی" }],
+          ],
+        );
+      } catch (error) {
+        await reply(ctx, next, redisClient, "مشکلی پیش آمده است");
+      }
+    } else {
+      try {
+        await reply(
+          ctx,
+          next,
+          redisClient,
+          "دنبال چه کسی میگردید ؟ 🔎",
+          [
+            [
+              { text: "خانم 💁‍♀️" },
+              { text: "آقا 🙆‍♂️" },
+              { text: "فرقی ندارد ⚧️" },
+            ],
+            [{ text: "مرحله قبلی" }],
+          ],
+        );
+      } catch (error) {
+        await reply(ctx, next, redisClient, "مشکلی پیش آمده است");
+      }
     }
   }
-}
 
   if (step === "state") {
     const findState = states.find(
@@ -531,25 +546,33 @@ const registerInBot = async (
     );
 
     if (ctx?.message?.text === "مرحله قبلی") {
-    // ✅ قبلاً به genderFilter برمیگشت، حالا به lookingFor
-    savedUser.registerStep = "lookingFor";
-    await User.findOneAndUpdate({ telegramId }, { registerStep: "lookingFor" });
-    usersMap.set(telegramId, { time: Date.now(), user: savedUser });
-
-    try {
-      await reply(
-        ctx, next, redisClient,
-        "دنبال چه کسی میگردید ؟ 🔎",
-        [
-          [{ text: "خانم 💁‍♀️" }, { text: "آقا 🙆‍♂️" }, { text: "فرقی ندارد ⚧️" }],
-          [{ text: "مرحله قبلی" }],
-        ],
+      // ✅ قبلاً به genderFilter برمیگشت، حالا به lookingFor
+      savedUser.registerStep = "lookingFor";
+      await User.findOneAndUpdate(
+        { telegramId },
+        { registerStep: "lookingFor" },
       );
-    } catch (error) {
-      await reply(ctx, next, redisClient, "مشکلی پیش آمده است");
-    }
+      usersMap.set(telegramId, { time: Date.now(), user: savedUser });
 
-  } else if (findState) {
+      try {
+        await reply(
+          ctx,
+          next,
+          redisClient,
+          "دنبال چه کسی میگردید ؟ 🔎",
+          [
+            [
+              { text: "خانم 💁‍♀️" },
+              { text: "آقا 🙆‍♂️" },
+              { text: "فرقی ندارد ⚧️" },
+            ],
+            [{ text: "مرحله قبلی" }],
+          ],
+        );
+      } catch (error) {
+        await reply(ctx, next, redisClient, "مشکلی پیش آمده است");
+      }
+    } else if (findState) {
       savedUser.registerStep = "name";
       savedUser.state = findState?.english || "";
       // await savedUser.save();
@@ -771,21 +794,6 @@ const registerInBot = async (
         time: Date.now(),
         user: savedUser,
       });
-
-      try {
-        if (
-          (savedUser.state === "Tehran" ||
-            savedUser.state === "Alborz") &&
-          savedUser.gender === "female"
-        ) {
-          await reply(
-            ctx,
-            next,
-            redisClient,
-            `درود ${savedUser.fullName} عزیز \n\n من ابولفضم سازنده ی ربات ، هر سوالی یا مشکلی داشتی میتونی ازم بپرسی 💕 \n\n@abolfazl021mokhtari \n@abolfazl021mokhtari \n@abolfazl021mokhtari`,
-          );
-        }
-      } catch (error) {}
 
       try {
         await reply(
@@ -1074,12 +1082,9 @@ const registerInBot = async (
 
         const fileId = ctx.message.photo.at(-1).file_id;
         const fileLink = await ctx.telegram.getFileLink(fileId);
-        try {
-          const filee = await ctx.message.photo.at(-1);
-          // console.log({ filee });
-        } catch (error) {}
 
         const imageUrl = await uploadImageFromUrl(fileLink);
+        // const imageUrl = fileLink?.href || "";
         // console.log("2222");
         if (photos.length === 3) return;
         photos.push(imageUrl);
@@ -1156,11 +1161,14 @@ const registerInBot = async (
         const bio = savedUser?.bio ?? "";
 
         try {
-          await ctx.replyWithPhoto(savedUser.profileImages[0], {
-            caption: `${fullName}, ${age}, ${state} ${
-              bio ? "\n" + bio : ""
-            } `,
-          });
+          await ctx.replyWithPhoto(
+            checkUrl(savedUser.profileImages[0]),
+            {
+              caption: `${fullName}, ${age}, ${state} ${
+                bio ? "\n" + bio : ""
+              } `,
+            },
+          );
         } catch (error) {
           console.log(error);
           try {
@@ -1217,11 +1225,14 @@ const registerInBot = async (
           const bio = savedUser?.bio ?? "";
 
           try {
-            await ctx.replyWithPhoto(savedUser.profileImages[0], {
-              caption: `${fullName}, ${age}, ${state} ${
-                bio ? "\n" + bio : ""
-              } `,
-            });
+            await ctx.replyWithPhoto(
+              checkUrl(savedUser.profileImages[0]),
+              {
+                caption: `${fullName}, ${age}, ${state} ${
+                  bio ? "\n" + bio : ""
+                } `,
+              },
+            );
           } catch (error) {
             console.log(error);
             try {
@@ -1291,6 +1302,20 @@ const registerInBot = async (
       const profileImages = savedUser.profileImages;
 
       activeUsersQueue.add({ telegramId });
+      try {
+        if (
+          (savedUser.state === "Tehran" ||
+            savedUser.state === "Alborz") &&
+          savedUser.gender === "female"
+        ) {
+          await reply(
+            ctx,
+            next,
+            redisClient,
+            `درود ${savedUser.fullName} عزیز \n\n من ابولفضم سازنده ی ربات ، هر سوالی یا مشکلی داشتی میتونی ازم بپرسی 💕 \n\n@abolfazl021mokhtari \n@abolfazl021mokhtari \n@abolfazl021mokhtari`,
+          );
+        }
+      } catch (error) {}
 
       // ست کردن کاربران اولیه در forYou
       const getData = await redisClient.getBuffer(
@@ -1417,7 +1442,7 @@ const registerInBot = async (
               try {
                 // const buffer = await getPic(photos[0]);
                 await ctx.replyWithPhoto(
-                  photos[0],
+                  checkUrl(photos[0]),
                   // {
                   //   source:
                   //     fs.existsSync(photos[0]) &&
@@ -1492,7 +1517,7 @@ const registerInBot = async (
                 const photos = profileImages;
 
                 try {
-                  await ctx.replyWithPhoto(photos[0], {
+                  await ctx.replyWithPhoto(checkUrl(photos[0]), {
                     caption: `${fullName}, ${age}, ${state} ${
                       bio ? "\n" + bio : ""
                     } `,
@@ -1602,7 +1627,7 @@ const registerInBot = async (
         try {
           // const buffer = await getPic(photos[0]);
           await ctx.replyWithPhoto(
-            photos[0],
+            checkUrl(photos[0]),
             // {
             //   source:
             //     fs.existsSync(photos[0]) &&

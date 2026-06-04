@@ -1,3 +1,4 @@
+const { checkUrl } = require("../utils/checkUrl");
 
 bot.start(async (ctx, next) => {
   try {
@@ -144,7 +145,7 @@ bot.hears(/\/user_(.+)/, async (ctx, next) => {
     const findBlock = blockedByMee.find((f) => f == +telegramId);
 
     try {
-      await ctx.replyWithPhoto(photo, {
+      await ctx.replyWithPhoto(checkUrl(photo), {
         caption: `${fullName}, ${age}, ${state} ${
           bio ? "\n" + bio : ""
         }\n/user_${userId || "not_found"}`,

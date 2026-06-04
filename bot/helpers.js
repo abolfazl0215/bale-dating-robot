@@ -7,6 +7,7 @@ const {
 } = require("./constants");
 const { generateInviteCode } = require("../utils/generateInviteCode");
 const { reply } = require("../telegram_methods/reply");
+const { checkUrl } = require("../utils/checkUrl");
 
 /** @returns {Promise<object|undefined>} */
 async function resolveExistingUser(telegramId, usersMap, User, getNowTime) {
@@ -89,7 +90,7 @@ async function showForYouProfile(ctx, next, redisClient, telegramId, forYouList)
   const { profileImages } = nextUser;
   const caption = buildProfileCaption(nextUser);
   try {
-    await ctx.replyWithPhoto(profileImages[0], { caption });
+    await ctx.replyWithPhoto(checkUrl(profileImages[0]), { caption });
   } catch (error) {
     try {
       await reply(ctx, next, redisClient, caption);

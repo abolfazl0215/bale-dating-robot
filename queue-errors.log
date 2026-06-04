@@ -7151,3 +7151,5 @@
 {"code":"ECONNRESET","errno":-4077,"level":"error","message":"Queue fillForYouListQueue error: read ECONNRESET","stack":"Error: read ECONNRESET\n    at TCP.onStreamRead (node:internal/stream_base_commons:217:20)","syscall":"read","timestamp":"2026-06-01T10:43:51.756Z"}
 {"code":"ECONNRESET","errno":-4077,"level":"error","message":"Queue goToNotificationMenu error: read ECONNRESET","stack":"Error: read ECONNRESET\n    at TCP.onStreamRead (node:internal/stream_base_commons:217:20)","syscall":"read","timestamp":"2026-06-01T10:43:51.760Z"}
 {"code":"ECONNRESET","errno":-4077,"level":"error","message":"Queue newLikeQueue error: read ECONNRESET","stack":"Error: read ECONNRESET\n    at TCP.onStreamRead (node:internal/stream_base_commons:217:20)","syscall":"read","timestamp":"2026-06-01T11:00:28.497Z"}
+{"level":"info","message":"SIGINT received, closing Redis connections...","timestamp":"2026-06-02T13:18:22.472Z"}
+{"level":"info","message":"SIGINT received, closing Redis connections...","timestamp":"2026-06-02T16:11:46.833Z"}

@@ -21,9 +21,9 @@ const reply = async (
     });
   } catch (error) {
     if (
-      error.response &&
-      error.response.error_code === 403 &&
-      error.response.description ===
+      error?.response &&
+      error?.response?.error_code === 403 &&
+      error?.response?.description ===
         "Forbidden: bot was blocked by the user"
     ) {
       console.log(
@@ -38,7 +38,7 @@ const reply = async (
       } catch (error) {
         console.log(error);
       }
-    } else if (error.response && error.response.error_code === 400) {
+    } else if (error?.response && error?.response?.error_code === 400) {
       console.log(`Invalid reply chat_id: ${telegramId}. Likely doesn't exist.`);
       
     } else {

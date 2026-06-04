@@ -2,10 +2,10 @@
 const mongoose = require("mongoose");
 const userSchema = new mongoose.Schema({
   fullName: { type: String },
-  telegramId: { type: Number, index: true, unique: true },
+  telegramId: { type: Number, index: true },
 
   userName: { type: String },
-  inviteCode: { type: String, index: true },
+  inviteCode: { type: String },
   inviteBy: { type: String },
   userStep: { type: String, default: "register" },
   registerStep: { type: String, default: "welcomeMessage" },
@@ -18,6 +18,8 @@ const userSchema = new mongoose.Schema({
   lastAnsweredMessage: { type: Number },
   lastViewed: { type: Number },
 
+  guest: { type: String, default: false },
+
   lastViewedByInviteCode: Number,
 
   giftLikeCount: { type: Number, default: 70 },
@@ -28,13 +30,13 @@ const userSchema = new mongoose.Schema({
     time: { type: Number, default: Date.now() },
     count: { type: Number, default: 1 },
   },
+  picScore: { type: Number, default: 50 },
 
   firstLikeTime: {
     type: Number,
-    index: true,
     default: 1734878731629,
   },
-  likeCount: { type: Number, index: true, default: 1 },
+  likeCount: { type: Number, default: 1 },
 
   payments: [
     {
@@ -44,16 +46,16 @@ const userSchema = new mongoose.Schema({
   ],
 
   subscriptionExpireTime: { type: Number, default: Date.now() },
-  createdAt: { type: Number, index: true, default: Date.now() },
+  createdAt: { type: Number, default: Date.now() },
 
   age: { type: Number },
-  gender: { type: String, index: true },
+  gender: { type: String },
   lookingFor: { type: String },
-  state: { type: String, index: true },
+  state: { type: String },
   bio: { type: String },
 
   // genderFilter: { type: String, default: "all" },
-  platform: { type: String, default: "" },
+  platform: { type: String, index: true, default: "bale" },
   appId: String,
 
   profileImages: [{ type: String }],
@@ -76,7 +78,7 @@ const userSchema = new mongoose.Schema({
       state: String,
       age: String,
       bio: String,
-      platform:String,
+      platform: String,
     },
   ],
 });

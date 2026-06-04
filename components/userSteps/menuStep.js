@@ -3,6 +3,7 @@ const User = require("../../models/User");
 const { getPic } = require("../../utils/getPic");
 const { reply } = require("../../telegram_methods/reply");
 const { requestToFillSuggestQueue } = require("../../config/redis");
+const { checkUrl } = require("../../utils/checkUrl");
 
 const menuStep = async (
   ctx,
@@ -67,7 +68,7 @@ const menuStep = async (
         try {
           // const buffer = await getPic(photos[0]);
           await ctx.replyWithPhoto(
-            photos[0],
+            checkUrl(photos[0]),
             // {
             //   source:
             //     fs.existsSync(photos[0]) &&
@@ -153,7 +154,7 @@ const menuStep = async (
           try {
             // const buffer = await getPic(photos[0]);
             await ctx.replyWithPhoto(
-              photos[0],
+              checkUrl(photos[0]),
               // {
               //   source:
               //     fs.existsSync(photos[0]) &&
@@ -213,7 +214,7 @@ const menuStep = async (
       try {
         // const buffer = await getPic(photos[0]);
         await ctx.replyWithPhoto(
-          photos[0],
+          checkUrl(photos[0]),
           // {
           //   source:
           //     fs.existsSync(photos[0]) &&

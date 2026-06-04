@@ -5,6 +5,7 @@ const { reply } = require("../../telegram_methods/reply.js");
 const {
   requestToFillSuggestQueue,
 } = require("../../config/redis.js");
+const { checkUrl } = require("../../utils/checkUrl.js");
 
 const editProfileMenu = async (
   ctx,
@@ -78,7 +79,7 @@ const editProfileMenu = async (
         try {
           // const buffer = await getPic(photos[0]);
           await ctx.replyWithPhoto(
-            photos[0],
+            checkUrl(photos[0]),
             // {
             //   source:
             //     fs.existsSync(photos[0]) &&
@@ -178,7 +179,7 @@ const editProfileMenu = async (
           try {
             // const buffer = await getPic(photos[0]);
             await ctx.replyWithPhoto(
-              photos[0],
+              checkUrl(photos[0]),
               // {
               //   source:
               //     fs.existsSync(photos[0]) &&

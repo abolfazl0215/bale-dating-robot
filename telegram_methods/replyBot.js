@@ -21,7 +21,7 @@ const replyBot = async (
       },
     });
   } catch (error) {
-    if (error.response.error_code === 404) {
+    if (error?.response?.error_code === 404) {
       console.log("user not found reply bot :", id);
       try {
         // کاربرانی که از ربات قبلی به ربات جدید نیامده اند
@@ -34,9 +34,9 @@ const replyBot = async (
       console.log(error);
     }
     if (
-      error.response &&
-      error.response.error_code === 403 &&
-      error.response.description ===
+      error?.response &&
+      error?.response?.error_code === 403 &&
+      error?.response?.description ===
         "Forbidden: bot was blocked by the user"
     ) {
       // console.log(
@@ -51,7 +51,10 @@ const replyBot = async (
       } catch (error) {
         console.log(error);
       }
-    } else if (error.response && error.response.error_code === 400) {
+    } else if (
+      error?.response &&
+      error?.response.error_code === 400
+    ) {
       console.log(
         `Invalid chat_id: ${telegramId}. Likely doesn't exist.`,
       );

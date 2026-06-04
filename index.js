@@ -1,10 +1,12 @@
-
 // Local Bull worker for broadcast queue (same process as before)
-global.currentPlatform = "telegram";
+global.currentPlatform = "bale";
 require("./messageToAllQueue.js");
 
 const bot = require("./utils/bot.js");
-const { redisClient, sendMessageToAllQueue } = require("./config/redis");
+const {
+  redisClient,
+  sendMessageToAllQueue,
+} = require("./config/redis");
 const { createApp, startHttpServer } = require("./app/server");
 const {
   startDailyReportPersistence,

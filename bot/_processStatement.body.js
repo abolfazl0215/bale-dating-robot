@@ -1,3 +1,5 @@
+const { checkUrl } = require("../utils/checkUrl");
+
 const processStatement = async (ctx, next) => {
   try {
     const telegramId = ctx?.from?.id;
@@ -164,7 +166,6 @@ const processStatement = async (ctx, next) => {
     }
     // if user changed userName update it in database >>>>>>>>>>>
     // if user changed userName update it in database >>>>>>>>>>>
-
 
     // check if user exist in database and after 8 minutes and 20 seconds add profile to forYou queue again <<<
     // check if user exist in database and after 8 minutes and 20 seconds add profile to forYou queue again <<<
@@ -636,7 +637,7 @@ const processStatement = async (ctx, next) => {
           try {
             // const buffer = await getPic(photos[0]);
             await ctx.replyWithPhoto(
-              photos[0],
+              checkUrl(photos[0]),
               // {
               //   source:
               //     fs.existsSync(photos[0]) &&
@@ -740,7 +741,7 @@ const processStatement = async (ctx, next) => {
           try {
             // const buffer = await getPic(photos[0]);
             await ctx.replyWithPhoto(
-              photos[0],
+              checkUrl(photos[0]),
               // {
               //   source:
               //     fs.existsSync(photos[0]) &&
@@ -1192,7 +1193,7 @@ const processStatement = async (ctx, next) => {
 
                 try {
                   // const buffer = await getPic(photos[0]);
-                  await ctx.replyWithPhoto(photos[0], {
+                  await ctx.replyWithPhoto(checkUrl(photos[0]), {
                     caption: `${fullName}, ${age}, ${state} ${
                       bio ? "\n" + bio : ""
                     } ${textMessage ? `\n\nپیام کاربر به شما 💌 : ` : ""}${textMessage ? textMessage : ""} \n/user_${inviteCode_ || "not_found"}`,
@@ -1673,7 +1674,7 @@ const processStatement = async (ctx, next) => {
 
                   try {
                     // const buffer = await getPic(photos[0]);
-                    await ctx.replyWithPhoto(photos[0], {
+                    await ctx.replyWithPhoto(checkUrl(photos[0]), {
                       caption: `${fullName}, ${age}, ${state} ${
                         bio ? "\n" + bio : ""
                       } ${textMessage ? `\n\nپیام کاربر به شما 💌 : ` : ""}${textMessage ? textMessage : ""} \n/user_${inviteCode_ || "not_found"}`,
@@ -1850,7 +1851,7 @@ const processStatement = async (ctx, next) => {
                   try {
                     // const buffer = await getPic(photos[0]);
                     await ctx.replyWithPhoto(
-                      photos[0],
+                      checkUrl(photos[0]),
 
                       {
                         caption: `${fullName}, ${age}, ${state} ${
@@ -1994,10 +1995,15 @@ const processStatement = async (ctx, next) => {
               ],
             ]);
             const nextUser = forYouList.get(telegramId)?.[0];
-if (!nextUser) {
-  await reply(ctx, next, redisClient, "کاربری برای نمایش وجود ندارد");
-  return;
-}
+            if (!nextUser) {
+              await reply(
+                ctx,
+                next,
+                redisClient,
+                "کاربری برای نمایش وجود ندارد",
+              );
+              return;
+            }
             const {
               fullName,
               age,
@@ -2009,7 +2015,7 @@ if (!nextUser) {
             userTelId = forYouList.get(telegramId)[0].telegramId;
 
             const photos = profileImages;
-            await ctx.replyWithPhoto(photos[0], {
+            await ctx.replyWithPhoto(checkUrl(photos[0]), {
               caption: `${fullName}, ${age}, ${state} ${
                 bio ? "\n" + bio : ""
               } \n/user_${inviteCode_from_forYouList || "not_found"}`,
@@ -2017,10 +2023,15 @@ if (!nextUser) {
           } catch (error) {
             try {
               const nextUser = forYouList.get(telegramId)?.[0];
-if (!nextUser) {
-  await reply(ctx, next, redisClient, "کاربری برای نمایش وجود ندارد");
-  return;
-}
+              if (!nextUser) {
+                await reply(
+                  ctx,
+                  next,
+                  redisClient,
+                  "کاربری برای نمایش وجود ندارد",
+                );
+                return;
+              }
               const {
                 fullName,
                 age,
@@ -2149,7 +2160,7 @@ if (!nextUser) {
           try {
             // const buffer = await getPic(photos[0]);
             await ctx.replyWithPhoto(
-              photos[0],
+              checkUrl(photos[0]),
               // {
               //   source:
               //     fs.existsSync(photos[0]) &&
@@ -2302,10 +2313,15 @@ if (!nextUser) {
               );
 
               const nextUser = forYouList.get(telegramId)?.[0];
-if (!nextUser) {
-  await reply(ctx, next, redisClient, "کاربری برای نمایش وجود ندارد");
-  return;
-}
+              if (!nextUser) {
+                await reply(
+                  ctx,
+                  next,
+                  redisClient,
+                  "کاربری برای نمایش وجود ندارد",
+                );
+                return;
+              }
 
               const {
                 fullName,
@@ -2319,7 +2335,7 @@ if (!nextUser) {
 
               const photos = profileImages;
 
-              await ctx.replyWithPhoto(photos[0], {
+              await ctx.replyWithPhoto(checkUrl(photos[0]), {
                 caption: `${fullName}, ${age}, ${state} ${
                   bio ? "\n" + bio : ""
                 } \n/user_${inviteCode_from_forYouList || "not_found"}`,
@@ -2327,10 +2343,15 @@ if (!nextUser) {
             } catch (error) {
               try {
                 const nextUser = forYouList.get(telegramId)?.[0];
-if (!nextUser) {
-  await reply(ctx, next, redisClient, "کاربری برای نمایش وجود ندارد");
-  return;
-}
+                if (!nextUser) {
+                  await reply(
+                    ctx,
+                    next,
+                    redisClient,
+                    "کاربری برای نمایش وجود ندارد",
+                  );
+                  return;
+                }
                 const {
                   fullName,
                   age,
@@ -2671,9 +2692,9 @@ if (!nextUser) {
     } else {
       if (inviteCode) {
         const inviteByUser = await User.findOne({ inviteCode });
-        console.log({inviteByUser})
-        if(inviteByUser && inviteByUser.startWith("joinapp")){
-          console.log("ok -----------------")
+        console.log({ inviteByUser });
+        if (inviteByUser && inviteByUser.startWith("joinapp")) {
+          console.log("ok -----------------");
         }
         if (!inviteByUser) return; // ← این خط نیست
         inviteByUser.giftLikeCount += 50;
@@ -2704,7 +2725,7 @@ if (!nextUser) {
         userName,
         inviteCode: generateInviteCode(telegramId),
         inviteBy: inviteCode || null,
-        platform:global.currentPlatform,
+        platform: global.currentPlatform,
       });
 
       await registerInBot(

@@ -10,6 +10,7 @@ const { getPic } = require("../utils/getPic");
 const { reply } = require("../telegram_methods/reply");
 const Pictures = require("../models/Pictures");
 const { requestToFillSuggestQueue } = require("../config/redis");
+const { checkUrl } = require("../utils/checkUrl");
 
 function containsLinkOrTelegramID(str) {
   // الگوی کلی برای تشخیص انواع لینک‌های URL
@@ -847,7 +848,7 @@ const editProfileInBot = async (
         try {
           // const buffer = await getPic(photos[0]);
           await ctx.replyWithPhoto(
-            photos[0],
+            checkUrl(photos[0]),
             // {
             //   source:
             //     fs.existsSync(photos[0]) &&
@@ -1041,7 +1042,7 @@ const editProfileInBot = async (
               try {
                 // const buffer = await getPic(photos[0]);
                 await ctx.replyWithPhoto(
-                  photos[0],
+                  checkUrl(photos[0]),
                   // {
                   //   source:
                   //     fs.existsSync(photos[0]) &&
@@ -1101,7 +1102,7 @@ const editProfileInBot = async (
                 try {
                   // const buffer = await getPic(photos[0]);
                   await ctx.replyWithPhoto(
-                    photos[0],
+                    checkUrl(photos[0]),
                     // {
                     //   source:
                     //     fs.existsSync(photos[0]) &&
@@ -1229,7 +1230,7 @@ const editProfileInBot = async (
         try {
           // const buffer = await getPic(photos[0]);
           await ctx.replyWithPhoto(
-            photos[0],
+            checkUrl(photos[0]),
             // {
             //   source:
             //     fs.existsSync(photos[0]) &&

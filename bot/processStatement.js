@@ -23,6 +23,7 @@ const {
   newLikeQueue,
   requestToFillSuggestQueue,
 } = require("../config/redis");
+const { checkUrl } = require("../utils/checkUrl.js");
 
 function createProcessStatement() {
   const {
@@ -166,7 +167,10 @@ function createProcessStatement() {
         usersMap.get(telegramId).time = getNowTime();
       } else {
         try {
-          existingUser = await User.findOne({ telegramId });
+          existingUser = await User.findOne({
+            telegramId,
+            platform: global.currentPlatform,
+          });
           if (existingUser) {
             usersMap.set(telegramId, {
               user: existingUser,
@@ -237,43 +241,95 @@ function createProcessStatement() {
             );
           } catch (error) {}
         }
-         if (inviteCode && inviteCode.startsWith("setusername")) {
+        if (inviteCode && inviteCode.startsWith("setusername")) {
           if (userName) {
             await reply(
               ctx,
               next,
               redisClient,
               "نام کاربری شما تنظیم شد ✅\n\n -لطفا به برنامه بازگردید",
+              [],
+              [
+                [
+                  {
+                    text: "ادامه  در ربات",
+                    callback_data: "done_start",
+                  },
+                ],
+              ],
             );
           } else {
             await reply(
               ctx,
               next,
               redisClient,
-            `شما هنوز نام کاربری تنظیم نکرده اید \n\n- لطفا یک نام کاربری (آیدی) برای خود در "${!existingUser?.platform || existingUser?.platform == "bale" ? "بله" :"تلگرام"}" انتخاب کنید`,
+              `شما هنوز نام کاربری تنظیم نکرده اید \n\n- لطفا یک نام کاربری (آیدی) برای خود در "${!existingUser?.platform || existingUser?.platform == "bale" ? "بله" : "تلگرام"}" انتخاب کنید`,
             );
           }
           return;
         }
-        // after 8 minutes and 20 seconds add profile to forYou queue again and update last time <<<
-        const lastTime = lastTimeAddProfileToList.get(telegramId);
-        if (lastTime) {
-          const userStep = existingUser?.userStep || "register";
-          if (userStep !== "register") {
-            if (lastTime + 500000 < Date.now()) {
-              lastTimeAddProfileToList.set(telegramId, Date.now());
-              activeUsersQueue.add({ telegramId });
+        if (inviteCode && inviteCode.startsWith("guest-")) {
+          try {
+            // ─── 1. Extract ID safely ─────────────────────────────
+            const parts = inviteCode.split("-");
+
+            const rawId = parts[1];
+
+            const idToNum = Number(rawId);
+
+            // ─── 2. Find current user ─────────────────────────────
+            const findByTelId = await User.findOne({ telegramId });
+
+            // ─── 3. CASE: user exists ──────────────────────────────
+            if (findByTelId) {
+              findByTelId.appId = String(idToNum);
+              await findByTelId.save();
+            } else {
+              // ─── 4. CASE: migrate existing app user ──────────────
+              const findUserByAppId = await User.findOne({
+                appId: String(idToNum),
+              });
+
+              if (!findUserByAppId) return;
+
+              findUserByAppId.telegramId = telegramId;
+              findUserByAppId.appId = String(idToNum);
+
+              await findUserByAppId.save();
             }
+
+            // ─── 5. Success response ──────────────────────────────
+            await reply(
+              ctx,
+              next,
+              redisClient,
+              "با موفقیت متصل شدید ✅\n\nلطفا به برنامه بازگردید",
+              [],
+              [
+                [
+                  {
+                    text: "ادامه در ربات",
+                    callback_data: "done_start",
+                  },
+                ],
+              ],
+            );
+
+            return;
+          } catch (error) {
+            console.error("inviteCode error:", error);
+            return;
           }
-          // after 8 minutes and 20 seconds add profile to forYou queue again and update last time >>>
-        } else {
-          // add profile to foryou and update last time <<<
-          const userStep = existingUser?.userStep || "register";
-          if (userStep !== "register") {
-            activeUsersQueue.add({ telegramId });
+        }
+        // after 8 minutes and 20 seconds add profile to forYou queue again and update last time <<<
+        const userStep = existingUser?.userStep || "register";
+        if (userStep !== "register") {
+          const lastTime =
+            lastTimeAddProfileToList.get(telegramId) ?? 0;
+          if (lastTime + 500000 < Date.now()) {
             lastTimeAddProfileToList.set(telegramId, Date.now());
+            activeUsersQueue.add({ telegramId });
           }
-          // add profile to foryou and update last time >>>
         }
       }
       // check if user exist in database and after 8 minutes and 20 seconds add profile to forYou queue again >>>
@@ -597,8 +653,9 @@ function createProcessStatement() {
             forYouList.get(telegramId) &&
             Array.isArray(forYouList.get(telegramId)) &&
             forYouList.get(telegramId).length > 10 &&
-            forYouTime.get(telegramId) &&
-            forYouTime.get(telegramId) + 600000 > Date.now()
+            forYouTime.get(telegramId)
+            // &&
+            // forYouTime.get(telegramId) + 600000 > Date.now()
           ) {
             // List is still valid, no need to add to queue
           } else {
@@ -725,7 +782,7 @@ function createProcessStatement() {
             try {
               // const buffer = await getPic(photos[0]);
               await ctx.replyWithPhoto(
-                photos[0],
+                checkUrl(photos[0]),
                 // {
                 //   source:
                 //     fs.existsSync(photos[0]) &&
@@ -831,7 +888,7 @@ function createProcessStatement() {
             try {
               // const buffer = await getPic(photos[0]);
               await ctx.replyWithPhoto(
-                photos[0],
+                checkUrl(photos[0]),
                 // {
                 //   source:
                 //     fs.existsSync(photos[0]) &&
@@ -1286,7 +1343,7 @@ function createProcessStatement() {
 
                   try {
                     // const buffer = await getPic(photos[0]);
-                    await ctx.replyWithPhoto(photos[0], {
+                    await ctx.replyWithPhoto(checkUrl(photos[0]), {
                       caption: `${fullName}, ${age}, ${state} ${
                         bio ? "\n" + bio : ""
                       } ${textMessage ? `\n\nپیام کاربر به شما 💌 : ` : ""}${textMessage ? textMessage : ""} \n/user_${inviteCode_ || "not_found"}`,
@@ -1772,7 +1829,7 @@ function createProcessStatement() {
 
                     try {
                       // const buffer = await getPic(photos[0]);
-                      await ctx.replyWithPhoto(photos[0], {
+                      await ctx.replyWithPhoto(checkUrl(photos[0]), {
                         caption: `${fullName}, ${age}, ${state} ${
                           bio ? "\n" + bio : ""
                         } ${textMessage ? `\n\nپیام کاربر به شما 💌 : ` : ""}${textMessage ? textMessage : ""} \n/user_${inviteCode_ || "not_found"}`,
@@ -1928,7 +1985,9 @@ function createProcessStatement() {
                         users: updatedUsersArray,
                       });
                       const buffer =
-                        protobuf.NewLikeProto.encode(message_).finish();
+                        protobuf.NewLikeProto.encode(
+                          message_,
+                        ).finish();
                       await redisClient.set(`newLikes`, buffer);
                     }
                   } catch (error) {
@@ -1949,7 +2008,7 @@ function createProcessStatement() {
                     try {
                       // const buffer = await getPic(photos[0]);
                       await ctx.replyWithPhoto(
-                        photos[0],
+                        checkUrl(photos[0]),
 
                         {
                           caption: `${fullName}, ${age}, ${state} ${
@@ -2113,7 +2172,7 @@ function createProcessStatement() {
               // userTelId = forYouList.get(telegramId)[0].telegramId;
 
               const photos = profileImages;
-              await ctx.replyWithPhoto(photos[0], {
+              await ctx.replyWithPhoto(checkUrl(photos[0]), {
                 caption: `${fullName}, ${age}, ${state} ${
                   bio ? "\n" + bio : ""
                 } \n/user_${inviteCode_from_forYouList || "not_found"}`,
@@ -2260,7 +2319,7 @@ function createProcessStatement() {
             try {
               // const buffer = await getPic(photos[0]);
               await ctx.replyWithPhoto(
-                photos[0],
+                checkUrl(photos[0]),
                 // {
                 //   source:
                 //     fs.existsSync(photos[0]) &&
@@ -2435,7 +2494,7 @@ function createProcessStatement() {
 
                 const photos = profileImages;
 
-                await ctx.replyWithPhoto(photos[0], {
+                await ctx.replyWithPhoto(checkUrl(photos[0]), {
                   caption: `${fullName}, ${age}, ${state} ${
                     bio ? "\n" + bio : ""
                   } \n/user_${inviteCode_from_forYouList || "not_found"}`,
@@ -2845,6 +2904,59 @@ function createProcessStatement() {
           }
           return;
         }
+        if (inviteCode && inviteCode.startsWith("guest-")) {
+          try {
+            // ─── 1. Extract ID safely ─────────────────────────────
+            const parts = inviteCode.split("-");
+
+            const rawId = parts[1];
+
+            const idToNum = Number(rawId);
+
+            // ─── 2. Find current user ─────────────────────────────
+            const findByTelId = await User.findOne({ telegramId });
+
+            // ─── 3. CASE: user exists ──────────────────────────────
+            if (findByTelId) {
+              findByTelId.appId = String(idToNum);
+              await findByTelId.save();
+            } else {
+              // ─── 4. CASE: migrate existing app user ──────────────
+              const findUserByAppId = await User.findOne({
+                appId: String(idToNum),
+              });
+
+              if (!findUserByAppId) return;
+
+              findUserByAppId.telegramId = telegramId;
+              findUserByAppId.appId = String(idToNum);
+
+              await findUserByAppId.save();
+            }
+
+            // ─── 5. Success response ──────────────────────────────
+            await reply(
+              ctx,
+              next,
+              redisClient,
+              "با موفقیت متصل شدید ✅\n\nلطفا به برنامه بازگردید",
+              [],
+              [
+                [
+                  {
+                    text: "ادامه در ربات",
+                    callback_data: "done_start",
+                  },
+                ],
+              ],
+            );
+
+            return;
+          } catch (error) {
+            console.error("inviteCode error:", error);
+            return;
+          }
+        }
         if (inviteCode && inviteCode.startsWith("joinapp")) {
           const saveduser = await User.create({
             telegramId,
@@ -2869,15 +2981,50 @@ function createProcessStatement() {
               ],
             ],
           );
-        } else {
-          const saveduser = await User.create({
-            telegramId,
-            userName,
-            inviteCode: generateInviteCode(telegramId),
-            inviteBy: inviteCode || null,
-            platform: global.currentPlatform,
-          });
         }
+        if (inviteCode && inviteCode.startsWith("joinapptelegram")) {
+          if (!userName) {
+            await reply(
+              ctx,
+              next,
+              redisClient,
+              "تلگرام شما باید یک نام کاربری (آیدی) داشته باشد \n\n- لطفا ایتدا یک نام کاربری انتخاب کنید",
+              [],
+              [
+                [
+                  {
+                    text: "انجام دادم ✅",
+                    callback_data: "set_telegram_username",
+                  },
+                ],
+              ],
+            );
+          } else {
+            await reply(
+              ctx,
+              next,
+              redisClient,
+              "از طریق دکمه زیر وارد برنامه شوید 👇🏻",
+              [],
+              [
+                [
+                  {
+                    text: "ورود به برنامه 😎",
+                    url: `pounes://user?telegramId=${telegramId}`,
+                  },
+                ],
+              ],
+            );
+          }
+          return;
+        }
+        const saveduser = await User.create({
+          telegramId,
+          userName,
+          inviteCode: generateInviteCode(telegramId),
+          inviteBy: inviteCode || null,
+          platform: global.currentPlatform,
+        });
 
         await registerInBot(
           ctx,
