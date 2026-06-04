@@ -1,5 +1,6 @@
 // Local Bull worker for broadcast queue (same process as before)
-global.currentPlatform = "bale";
+// global.currentPlatform = "bale";
+global.currentPlatform = "telegram";
 require("./messageToAllQueue.js");
 
 const bot = require("./utils/bot.js");
