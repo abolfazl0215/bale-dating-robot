@@ -345,14 +345,14 @@ function createProcessStatement() {
               redisClient,
               "از طریق دکمه زیر وارد برنامه شوید 👇🏻",
               [],
-              [
-                [
-                  {
-                    text: "ورود به برنامه 😎",
-                    url: `pounes://user?telegramId=${telegramId}`,
-                  },
-                ],
-              ],
+              // [
+              //   [
+              //     {
+              //       text: "ورود به برنامه 😎",
+              //       url: `pounes://user?telegramId=${telegramId}`,
+              //     },
+              //   ],
+              // ],
             );
           }
           return;
@@ -3042,14 +3042,14 @@ function createProcessStatement() {
               redisClient,
               "از طریق دکمه زیر وارد برنامه شوید 👇🏻",
               [],
-              [
-                [
-                  {
-                    text: "ورود به برنامه 😎",
-                    url: `pounes://user?telegramId=${telegramId}`,
-                  },
-                ],
-              ],
+              // [
+              //   [
+              //     {
+              //       text: "ورود به برنامه 😎",
+              //       url: `pounes://user?telegramId=${telegramId}`,
+              //     },
+              //   ],
+              // ],
             );
           }
           return;
