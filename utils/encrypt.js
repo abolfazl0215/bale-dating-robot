@@ -1,7 +1,7 @@
 const crypto = require("crypto");
 
 // کلید مخفی خودت (حداقل ۳۲ کاراکتر - خیلی مهم است)
-const SECRET_KEY = "saklndklqDQWwefwergWFQ@$#gvbd2#_,qwekn";
+const SECRET_KEY = "12345678901234567890123456789012"; // دقیقاً ۳۲ کاراکتر
 
 // تبدیل آبجکت به رشته رمزنگاری شده
 function encrypt(data) {
