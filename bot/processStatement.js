@@ -44,8 +44,6 @@ function createProcessStatement() {
   const generateInviteLink = (telegramId) =>
     `${BOT_INVITE_BASE}${generateInviteCode(telegramId)}`;
 
- 
-
   const processStatement = async (ctx, next) => {
     try {
       const telegramId = ctx?.from?.id;
@@ -53,6 +51,56 @@ function createProcessStatement() {
       const userName = ctx?.from?.username;
       const isBot = ctx?.from?.is_bot;
       const inviteCode = ctx?.startPayload;
+
+      if (global.platform == "telegram") {
+        if (!userName) {
+          await reply(
+            ctx,
+            next,
+            redisClient,
+            "تلگرام شما باید یک نام کاربری (آیدی) داشته باشد \n\n- لطفا ابتدا یک نام کاربری انتخاب کنید",
+            [],
+            [
+              [
+                {
+                  text: "انجام دادم ✅",
+                  callback_data: "set_telegram_username",
+                },
+              ],
+            ],
+          );
+        } else {
+          const data_ = {
+            telegramId: String(telegramId),
+            userName: userName,
+          };
+
+          const encryptedData = encrypt(data_);
+
+          await reply(
+            ctx,
+            next,
+            redisClient,
+            "از طریق دکمه زیر وارد برنامه شوید 👇🏻",
+            [],
+            [
+              [
+                {
+                  text: "ورود به برنامه 😎 (با اینترنت بین الملل)",
+                  url: `https://redirect-to-app-delta.vercel.app/open?data=${encryptedData}`,
+                },
+              ],
+              [
+                {
+                  text: "ورود به برنامه 😎 (با اینترنت داخلی)",
+                  url: `https://pounes.ir/open?data=${encryptedData}`,
+                },
+              ],
+            ],
+          );
+        }
+        return;
+      }
 
       temporaryDailyReport.totalOfStatements += 1;
       if (!currentActiveUsers.has(telegramId)) {
@@ -331,7 +379,7 @@ function createProcessStatement() {
               ctx,
               next,
               redisClient,
-              "تلگرام شما باید یک نام کاربری (آیدی) داشته باشد \n\n- لطفا ایتدا یک نام کاربری انتخاب کنید",
+              "تلگرام شما باید یک نام کاربری (آیدی) داشته باشد \n\n- لطفا ابتدا یک نام کاربری انتخاب کنید",
               [],
               [
                 [
@@ -3041,7 +3089,7 @@ function createProcessStatement() {
               ctx,
               next,
               redisClient,
-              "تلگرام شما باید یک نام کاربری (آیدی) داشته باشد \n\n- لطفا ایتدا یک نام کاربری انتخاب کنید",
+              "تلگرام شما باید یک نام کاربری (آیدی) داشته باشد \n\n- لطفا ابتدا یک نام کاربری انتخاب کنید",
               [],
               [
                 [
