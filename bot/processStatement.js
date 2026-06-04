@@ -348,7 +348,13 @@ function createProcessStatement() {
               [
                 [
                   {
-                    text: "ورود به برنامه 😎",
+                    text: "ورود به برنامه 😎 (با اینترنت بین الملل)",
+                    url: `https://redirect-to-app-delta.vercel.app/open?data=${telegramId}`,
+                  },
+                ],
+                [
+                  {
+                    text: "ورود به برنامه 😎 (با اینترنت داخلی)",
                     url: `https://pounes.ir/open?data=${telegramId}`,
                   },
                 ],
@@ -3045,7 +3051,13 @@ function createProcessStatement() {
               [
                 [
                   {
-                    text: "ورود به برنامه 😎",
+                    text: "ورود به برنامه 😎 (با اینترنت بین الملل)",
+                    url: `https://redirect-to-app-delta.vercel.app/open?data=${telegramId}`,
+                  },
+                ],
+                [
+                  {
+                    text: "ورود به برنامه 😎 (با اینترنت داخلی)",
                     url: `https://pounes.ir/open?data=${telegramId}`,
                   },
                 ],

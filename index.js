@@ -40,6 +40,10 @@ startRedisPerformanceLogging(redisClient);
 registerLocalQueueWorkers();
 loadBlockedUsers();
 
+app.get('/ping', (req, res) => {
+  res.send('pong');
+})
+
 // Placeholder interval (notification cron was commented out in original)
 setInterval(async () => {
   try {
